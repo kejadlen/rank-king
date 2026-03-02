@@ -439,20 +439,20 @@ class TestPlackettLuce < Minitest::Test
 
   def test_solo_game_unchanged
     r = @model.rating
-    result = OpenSkill::PlackettLuce.rate([[r]], @model)
+    result = OpenSkill::PlackettLuce.new(@model).rate([[r]])
     assert_equal [[r]], result
   end
 
   def test_2p_ffa
     r = @model.rating
-    result = OpenSkill::PlackettLuce.rate([[r], [r]], @model)
+    result = OpenSkill::PlackettLuce.new(@model).rate([[r], [r]])
     assert_rating 27.63523138347365, 8.065506316323548, result[0][0]
     assert_rating 22.36476861652635, 8.065506316323548, result[1][0]
   end
 
   def test_3p_ffa
     r = @model.rating
-    result = OpenSkill::PlackettLuce.rate([[r], [r], [r]], @model)
+    result = OpenSkill::PlackettLuce.new(@model).rate([[r], [r], [r]])
     assert_rating 27.868876552746237, 8.204837030780652, result[0][0]
     assert_rating 25.717219138186557, 8.057829747583874, result[1][0]
     assert_rating 21.413904309067206, 8.057829747583874, result[2][0]
@@ -460,7 +460,7 @@ class TestPlackettLuce < Minitest::Test
 
   def test_4p_ffa
     r = @model.rating
-    result = OpenSkill::PlackettLuce.rate([[r], [r], [r], [r]], @model)
+    result = OpenSkill::PlackettLuce.new(@model).rate([[r], [r], [r], [r]])
     assert_rating 27.795084971874736, 8.263160757613477, result[0][0]
     assert_rating 26.552824984374855, 8.179213704945203, result[1][0]
     assert_rating 24.68943500312503, 8.083731307186588, result[2][0]
@@ -469,7 +469,7 @@ class TestPlackettLuce < Minitest::Test
 
   def test_5p_ffa
     r = @model.rating
-    result = OpenSkill::PlackettLuce.rate([[r], [r], [r], [r], [r]], @model)
+    result = OpenSkill::PlackettLuce.new(@model).rate([[r], [r], [r], [r], [r]])
     assert_rating 27.666666666666668, 8.290556877154474, result[0][0]
     assert_rating 26.833333333333332, 8.240145629781066, result[1][0]
     assert_rating 25.72222222222222, 8.179996679645559, result[2][0]
@@ -479,7 +479,7 @@ class TestPlackettLuce < Minitest::Test
 
   def test_3_teams_different_sizes
     r = @model.rating
-    result = OpenSkill::PlackettLuce.rate([[r, r, r], [r], [r, r]], @model)
+    result = OpenSkill::PlackettLuce.new(@model).rate([[r, r, r], [r], [r, r]])
     assert_rating 25.939870821784513, 8.247641552260456, result[0][0]
     assert_rating 25.939870821784513, 8.247641552260456, result[0][1]
     assert_rating 25.939870821784513, 8.247641552260456, result[0][2]

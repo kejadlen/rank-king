@@ -3,12 +3,17 @@
 # Port of https://github.com/philihp/openskill.js/blob/main/src/models/plackett-luce.ts
 
 module OpenSkill
-  module PlackettLuce
-    def self.rate(game, model, rank: nil)
+  class PlackettLuce
+    def initialize(model)
+      @beta_sq = model.beta_sq
+      @epsilon = model.epsilon
+    end
+
+    def rate(game, rank: nil)
       return game if game.length <= 1
 
       team_ratings = Util.team_rating(game, rank: rank)
-      c = Util.util_c(team_ratings, model.beta_sq)
+      c = Util.util_c(team_ratings, @beta_sq)
       sum_q = Util.util_sum_q(team_ratings, c)
       a = Util.util_a(team_ratings)
 
@@ -33,7 +38,7 @@ module OpenSkill
         tr.team.map { |player|
           share = player.sigma**2 / tr.sigma_sq
           new_mu = player.mu + share * omega
-          new_sigma = player.sigma * Math.sqrt([1 - share * delta, model.epsilon].max)
+          new_sigma = player.sigma * Math.sqrt([1 - share * delta, @epsilon].max)
           Rating.new(new_mu, new_sigma)
         }
       }
