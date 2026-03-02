@@ -36,11 +36,15 @@ module OpenSkill
 
     private
 
+    # Dense ranks: tied teams share a rank, next group gets the next integer.
+    # [0, 0, 1] not [0, 0, 2]. The Plackett-Luce math only uses relative
+    # comparisons (<=, >=, ==) so dense and sparse ranks are equivalent.
+    # The prior implementation produced sparse/positional ranks where gaps
+    # reflect the number of tied teams ([0, 0, 2]). Restore that if a
+    # future model needs it.
     def rankings
-      s = 0
-      rank.map.with_index { |_, j|
-        s = j if j > 0 && rank[j - 1] < rank[j]
-        s
+      rank.chunk_while { |a, b| a == b }.flat_map.with_index { |group, i|
+        [i] * group.size
       }
     end
   end
