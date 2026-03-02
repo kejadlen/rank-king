@@ -337,17 +337,17 @@ class TestTeamRating < Minitest::Test
     team1 = [r]
     team2 = [r, r]
     result = OpenSkill::Util.team_rating([team1, team2])
-    assert_equal [25, 69.44444444444446, team1, 0], result[0]
-    assert_equal [50, 138.8888888888889, team2, 1], result[1]
+    assert_equal [25, 69.44444444444446, team1, 0], result[0].to_a
+    assert_equal [50, 138.8888888888889, team2, 1], result[1].to_a
   end
 
   def test_aggregates_5v5
     r = OpenSkill.rating
     result = OpenSkill::Util.team_rating([[r] * 5, [r] * 5])
-    assert_in_delta 125, result[0][0]
-    assert_in_delta 125, result[1][0]
-    assert_in_delta 347.22, result[0][1], 0.01
-    assert_in_delta 347.22, result[1][1], 0.01
+    assert_in_delta 125, result[0].mu
+    assert_in_delta 125, result[1].mu
+    assert_in_delta 347.22, result[0].sigma_sq, 0.01
+    assert_in_delta 347.22, result[1].sigma_sq, 0.01
   end
 end
 

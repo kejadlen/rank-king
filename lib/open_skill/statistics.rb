@@ -18,6 +18,7 @@ module OpenSkill
       xt = x - t
       denom = phi_major(xt)
       return -xt if denom < Float::EPSILON
+
       phi_minor(xt) / denom
     end
 
@@ -25,25 +26,29 @@ module OpenSkill
       xt = x - t
       denom = phi_major(xt)
       if denom < Float::EPSILON
-        return x < 0 ? 1 : 0
+        return x.negative? ? 1 : 0
       end
-      v(x, t) * (v(x, t) + xt)
+
+      vxt = v(x, t)
+      vxt * (vxt + xt)
     end
 
     def self.vt(x, t)
       xx = x.abs
       b = phi_major(t - xx) - phi_major(-t - xx)
       if b < 1e-5
-        return x < 0 ? -x - t : -x + t
+        return x.negative? ? -x - t : -x + t
       end
+
       a = phi_minor(-t - xx) - phi_minor(t - xx)
-      (x < 0 ? -a : a) / b
+      (x.negative? ? -a : a) / b
     end
 
     def self.wt(x, t)
       xx = x.abs
       b = phi_major(t - xx) - phi_major(-t - xx)
       return 1.0 if b < Float::EPSILON
+
       ((t - xx) * phi_minor(t - xx) + (t + xx) * phi_minor(-t - xx)) / b + vt(x, t)**2
     end
   end

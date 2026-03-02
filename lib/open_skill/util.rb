@@ -4,84 +4,66 @@
 
 module OpenSkill
   module Util
-    # TeamRating: [mu, sigma_sq, team, rank]
-
     def self.score(q, i)
-      if q < i
-        0.0
-      elsif q > i
-        1.0
-      else
-        0.5
+      case q <=> i
+      when -1 then 0.0
+      when  0 then 0.5
+      when  1 then 1.0
       end
     end
 
     def self.rankings(teams, rank)
       return [] if teams.empty?
 
-      team_scores = teams.each_index.map { |i| rank && rank[i] ? rank[i] : i }
-      out_rank = Array.new(teams.length)
+      team_scores = teams.each_index.map { |i| rank&.at(i) || i }
 
       s = 0
-      team_scores.each_with_index do |_score, j|
+      team_scores.each_with_index.map do |_, j|
         s = j if j > 0 && team_scores[j - 1] < team_scores[j]
-        out_rank[j] = s
+        s
       end
-      out_rank
     end
 
     def self.ladder_pairs(ranks)
-      size = ranks.length
-      return [[]] if size <= 1
+      return [[]] if ranks.length <= 1
 
-      left = [nil, *ranks[0...(size - 1)]]
-      right = [*ranks[1..], nil]
+      padded_left = [nil, *ranks[...-1]]
+      padded_right = [*ranks[1..], nil]
 
-      left.zip(right).map do |l, r|
-        if l && r
-          [l, r]
-        elsif l
-          [l]
-        elsif r
-          [r]
-        else
-          []
-        end
-      end
+      padded_left.zip(padded_right).map { |pair| pair.compact }
     end
 
-    def self.team_rating(game, rank: nil, **_options)
+    def self.team_rating(game, rank: nil, **)
       ranks = rankings(game, rank)
       game.each_with_index.map do |team, i|
-        mu = team.sum(&:mu)
-        sigma_sq = team.sum { |p| p.sigma**2 }
-        [mu, sigma_sq, team, ranks[i]]
+        TeamRating.new(
+          mu: team.sum(&:mu),
+          sigma_sq: team.sum { |p| p.sigma**2 },
+          team: team,
+          rank: ranks[i],
+        )
       end
     end
 
-    def self.util_c(team_ratings, **options)
-      beta_sq = OpenSkill.constants(**options)[:beta_sq]
-      Math.sqrt(team_ratings.sum { |tr| tr[1] + beta_sq })
+    def self.util_c(team_ratings, **)
+      beta_sq = OpenSkill.constants(**)[:beta_sq]
+      Math.sqrt(team_ratings.sum { |tr| tr.sigma_sq + beta_sq })
     end
 
     def self.util_sum_q(team_ratings, c)
-      team_ratings.map do |q_rating|
-        q_rank = q_rating[3]
+      team_ratings.map do |qr|
         team_ratings
-          .select { |i_rating| i_rating[3] >= q_rank }
-          .sum { |i_rating| Math.exp(i_rating[0] / c) }
+          .select { |ir| ir.rank >= qr.rank }
+          .sum { |ir| Math.exp(ir.mu / c) }
       end
     end
 
     def self.util_a(team_ratings)
-      team_ratings.map do |i_rating|
-        i_rank = i_rating[3]
-        team_ratings.count { |q_rating| i_rank == q_rating[3] }
-      end
+      team_ratings.map { |ir| team_ratings.count { |qr| ir.rank == qr.rank } }
     end
 
-    def self.gamma(c, _k, _mu, sigma_sq, _team, _rank)
-      Math.sqrt(sigma_sq) / c
+    def self.gamma(c, _k, tr)
+      Math.sqrt(tr.sigma_sq) / c
     end
   end
 end
