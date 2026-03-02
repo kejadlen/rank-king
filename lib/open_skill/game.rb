@@ -9,6 +9,13 @@ module OpenSkill
   #
   # Each argument is a placement group — an array of teams that tied at
   # that position. Each team is an array of Rating objects.
+
+  # Intermediate structure for team-level aggregation during rating.
+  # Produced by Game#team_ratings, consumed by PlackettLuce and Util helpers.
+  TeamRating = Data.define(:mu, :sigma_sq, :team, :rank) do
+    def to_a = [mu, sigma_sq, team, rank]
+  end
+
   class Game
     attr_reader :rank_groups, :teams, :rank
 
