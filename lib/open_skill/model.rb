@@ -20,7 +20,7 @@ module OpenSkill
       @tau = tau
       @limit_sigma = limit_sigma
 
-      @plackett_luce = PlackettLuce.new(self)
+      @rating_model = PlackettLuce.new(self)
     end
 
     def rating
@@ -46,7 +46,7 @@ module OpenSkill
       ordered_teams = ordered.map(&:first)
       sorted_rank = ordered.map(&:last)
 
-      new_ratings = @plackett_luce.rate(ordered_teams, rank: sorted_rank)
+      new_ratings = @rating_model.rate(ordered_teams, rank: sorted_rank)
 
       result = rank.zip(new_ratings).sort_by(&:first).map(&:last)
 
