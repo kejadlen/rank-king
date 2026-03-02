@@ -15,34 +15,30 @@ module OpenSkill
     def self.rankings(teams, rank)
       return [] if teams.empty?
 
-      team_scores = teams.each_index.map { |i| rank&.at(i) || i }
+      team_scores = teams.map.with_index { |_, i| rank&.at(i) || i }
 
       s = 0
-      team_scores.each_with_index.map do |_, j|
+      team_scores.map.with_index { |_, j|
         s = j if j > 0 && team_scores[j - 1] < team_scores[j]
         s
-      end
+      }
     end
 
     def self.ladder_pairs(ranks)
       return [[]] if ranks.length <= 1
 
-      padded_left = [nil, *ranks[...-1]]
-      padded_right = [*ranks[1..], nil]
-
-      padded_left.zip(padded_right).map { |pair| pair.compact }
+      [nil, *ranks, nil].each_cons(3).map { |l, _, r| [l, r].compact }
     end
 
     def self.team_rating(game, rank: nil, **)
-      ranks = rankings(game, rank)
-      game.each_with_index.map do |team, i|
+      game.zip(rankings(game, rank)).map { |team, rank|
         TeamRating.new(
           mu: team.sum(&:mu),
           sigma_sq: team.sum { |p| p.sigma**2 },
           team: team,
-          rank: ranks[i],
+          rank: rank,
         )
-      end
+      }
     end
 
     def self.util_c(team_ratings, **)
@@ -51,11 +47,11 @@ module OpenSkill
     end
 
     def self.util_sum_q(team_ratings, c)
-      team_ratings.map do |qr|
+      team_ratings.map { |qr|
         team_ratings
           .select { |ir| ir.rank >= qr.rank }
           .sum { |ir| Math.exp(ir.mu / c) }
-      end
+      }
     end
 
     def self.util_a(team_ratings)
