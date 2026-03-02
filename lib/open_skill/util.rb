@@ -12,29 +12,10 @@ module OpenSkill
       end
     end
 
-    def self.rankings(rank)
-      s = 0
-      rank.map.with_index { |_, j|
-        s = j if j > 0 && rank[j - 1] < rank[j]
-        s
-      }
-    end
-
     def self.ladder_pairs(ranks)
       return [[]] if ranks.length <= 1
 
       [nil, *ranks, nil].each_cons(3).map { |l, _, r| [l, r].compact }
-    end
-
-    def self.team_rating(game, rank:)
-      game.zip(rankings(rank)).map { |team, rank|
-        TeamRating.new(
-          mu: team.sum(&:mu),
-          sigma_sq: team.sum { |p| p.sigma**2 },
-          team: team,
-          rank: rank,
-        )
-      }
     end
 
     def self.util_c(team_ratings, beta_sq)

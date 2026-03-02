@@ -6,7 +6,7 @@ module OpenSkill
   Rating = Data.define(:mu, :sigma)
 
   # Intermediate structure for team-level aggregation during rating.
-  # Produced by Util.team_rating, consumed by PlackettLuce and Util helpers.
+  # Produced by Game#team_ratings, consumed by PlackettLuce and Util helpers.
   TeamRating = Data.define(:mu, :sigma_sq, :team, :rank) do
     def to_a = [mu, sigma_sq, team, rank]
   end

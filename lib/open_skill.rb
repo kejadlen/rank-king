@@ -4,6 +4,7 @@
 # Implements the Plackett-Luce model for skill rating.
 
 require_relative "open_skill/rating"
+require_relative "open_skill/game"
 require_relative "open_skill/statistics"
 require_relative "open_skill/util"
 require_relative "open_skill/plackett_luce"

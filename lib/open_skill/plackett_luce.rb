@@ -9,10 +9,10 @@ module OpenSkill
       @epsilon = model.epsilon
     end
 
-    def rate(game, rank:)
-      return game if game.length <= 1
+    def rate(game)
+      return game.teams if game.teams.length <= 1
 
-      team_ratings = Util.team_rating(game, rank: rank)
+      team_ratings = game.team_ratings
       c = Util.util_c(team_ratings, @beta_sq)
       sum_q = Util.util_sum_q(team_ratings, c)
       a = Util.util_a(team_ratings)
