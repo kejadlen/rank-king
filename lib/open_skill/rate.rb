@@ -3,7 +3,7 @@
 # Port of https://github.com/philihp/openskill.js/blob/main/src/rate.ts
 
 module OpenSkill
-  def self.rate(teams, **options)
+  def self.rate(teams, rank: nil, score: nil, **options)
     env = constants(**options)
 
     processed_teams = teams
@@ -17,14 +17,15 @@ module OpenSkill
     end
 
     # Build rank from score (negated so higher score = lower rank) or default 1..n
-    rank = options[:rank] || options[:score]&.map { |s| -s } || (1..teams.length).to_a
+    rank = rank || score&.map { |s| -s } || (1..teams.length).to_a
 
     # Sort by rank, run the model, then restore original order
     ordered = processed_teams.zip(rank).sort_by(&:last)
     ordered_teams = ordered.map(&:first)
     sorted_rank = ordered.map(&:last)
 
-    new_ratings = PlackettLuce.rate(ordered_teams, **options.merge(rank: sorted_rank))
+    # rank: flows through PlackettLuce's **options into Util.team_rating
+    new_ratings = PlackettLuce.rate(ordered_teams, rank: sorted_rank, **options)
 
     result = rank.zip(new_ratings).sort_by(&:first).map(&:last)
 
