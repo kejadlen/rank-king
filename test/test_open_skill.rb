@@ -357,14 +357,14 @@ class TestUtilC < Minitest::Test
     team1 = [r]
     team2 = [r, r]
     team_ratings = OpenSkill::Util.team_rating([team2, team1])
-    c = OpenSkill::Util.util_c(team_ratings)
+    c = OpenSkill::Util.util_c(team_ratings, OpenSkill.constants)
     assert_in_delta 15.590239, c, 0.001
   end
 
   def test_util_c_5v5
     r = OpenSkill.rating
     team_ratings = OpenSkill::Util.team_rating([[r] * 5, [r] * 5])
-    c = OpenSkill::Util.util_c(team_ratings)
+    c = OpenSkill::Util.util_c(team_ratings, OpenSkill.constants)
     assert_in_delta 27.003, c, 0.001
   end
 end
@@ -376,7 +376,7 @@ class TestUtilSumQ < Minitest::Test
     team1 = [r]
     team2 = [r, r]
     team_ratings = OpenSkill::Util.team_rating([team1, team2])
-    c = OpenSkill::Util.util_c(team_ratings)
+    c = OpenSkill::Util.util_c(team_ratings, OpenSkill.constants)
     sum_q = OpenSkill::Util.util_sum_q(team_ratings, c)
     assert_equal [29.67892702634643, 24.70819334370875], sum_q
   end
@@ -384,7 +384,7 @@ class TestUtilSumQ < Minitest::Test
   def test_util_sum_q_5v5
     r = OpenSkill.rating
     team_ratings = OpenSkill::Util.team_rating([[r] * 5, [r] * 5])
-    c = OpenSkill::Util.util_c(team_ratings)
+    c = OpenSkill::Util.util_c(team_ratings, OpenSkill.constants)
     sum_q = OpenSkill::Util.util_sum_q(team_ratings, c)
     assert_in_delta 204.84, sum_q[0], 0.01
     assert_in_delta 102.42, sum_q[1], 0.01
@@ -419,20 +419,20 @@ end
 class TestPlackettLuce < Minitest::Test
   def test_solo_game_unchanged
     r = OpenSkill.rating
-    result = OpenSkill::PlackettLuce.rate([[r]])
+    result = OpenSkill::PlackettLuce.rate([[r]], OpenSkill.constants)
     assert_equal [[r]], result
   end
 
   def test_2p_ffa
     r = OpenSkill.rating
-    result = OpenSkill::PlackettLuce.rate([[r], [r]])
+    result = OpenSkill::PlackettLuce.rate([[r], [r]], OpenSkill.constants)
     assert_rating 27.63523138347365, 8.065506316323548, result[0][0]
     assert_rating 22.36476861652635, 8.065506316323548, result[1][0]
   end
 
   def test_3p_ffa
     r = OpenSkill.rating
-    result = OpenSkill::PlackettLuce.rate([[r], [r], [r]])
+    result = OpenSkill::PlackettLuce.rate([[r], [r], [r]], OpenSkill.constants)
     assert_rating 27.868876552746237, 8.204837030780652, result[0][0]
     assert_rating 25.717219138186557, 8.057829747583874, result[1][0]
     assert_rating 21.413904309067206, 8.057829747583874, result[2][0]
@@ -440,7 +440,7 @@ class TestPlackettLuce < Minitest::Test
 
   def test_4p_ffa
     r = OpenSkill.rating
-    result = OpenSkill::PlackettLuce.rate([[r], [r], [r], [r]])
+    result = OpenSkill::PlackettLuce.rate([[r], [r], [r], [r]], OpenSkill.constants)
     assert_rating 27.795084971874736, 8.263160757613477, result[0][0]
     assert_rating 26.552824984374855, 8.179213704945203, result[1][0]
     assert_rating 24.68943500312503, 8.083731307186588, result[2][0]
@@ -449,7 +449,7 @@ class TestPlackettLuce < Minitest::Test
 
   def test_5p_ffa
     r = OpenSkill.rating
-    result = OpenSkill::PlackettLuce.rate([[r], [r], [r], [r], [r]])
+    result = OpenSkill::PlackettLuce.rate([[r], [r], [r], [r], [r]], OpenSkill.constants)
     assert_rating 27.666666666666668, 8.290556877154474, result[0][0]
     assert_rating 26.833333333333332, 8.240145629781066, result[1][0]
     assert_rating 25.72222222222222, 8.179996679645559, result[2][0]
@@ -459,7 +459,7 @@ class TestPlackettLuce < Minitest::Test
 
   def test_3_teams_different_sizes
     r = OpenSkill.rating
-    result = OpenSkill::PlackettLuce.rate([[r, r, r], [r], [r, r]])
+    result = OpenSkill::PlackettLuce.rate([[r, r, r], [r], [r, r]], OpenSkill.constants)
     assert_rating 25.939870821784513, 8.247641552260456, result[0][0]
     assert_rating 25.939870821784513, 8.247641552260456, result[0][1]
     assert_rating 25.939870821784513, 8.247641552260456, result[0][2]

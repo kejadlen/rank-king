@@ -30,7 +30,7 @@ module OpenSkill
       [nil, *ranks, nil].each_cons(3).map { |l, _, r| [l, r].compact }
     end
 
-    def self.team_rating(game, rank: nil, **)
+    def self.team_rating(game, rank: nil)
       game.zip(rankings(game, rank)).map { |team, rank|
         TeamRating.new(
           mu: team.sum(&:mu),
@@ -41,9 +41,8 @@ module OpenSkill
       }
     end
 
-    def self.util_c(team_ratings, **)
-      beta_sq = OpenSkill.constants(**).beta_sq
-      Math.sqrt(team_ratings.sum { |tr| tr.sigma_sq + beta_sq })
+    def self.util_c(team_ratings, env)
+      Math.sqrt(team_ratings.sum { |tr| tr.sigma_sq + env.beta_sq })
     end
 
     def self.util_sum_q(team_ratings, c)

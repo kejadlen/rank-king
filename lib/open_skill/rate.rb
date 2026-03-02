@@ -24,8 +24,7 @@ module OpenSkill
     ordered_teams = ordered.map(&:first)
     sorted_rank = ordered.map(&:last)
 
-    # rank: flows through PlackettLuce's **options into Util.team_rating
-    new_ratings = PlackettLuce.rate(ordered_teams, rank: sorted_rank, **options)
+    new_ratings = PlackettLuce.rate(ordered_teams, env, rank: sorted_rank)
 
     result = rank.zip(new_ratings).sort_by(&:first).map(&:last)
 
