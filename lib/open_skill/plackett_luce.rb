@@ -4,11 +4,11 @@
 
 module OpenSkill
   module PlackettLuce
-    def self.rate(game, env, rank: nil)
+    def self.rate(game, model, rank: nil)
       return game if game.length <= 1
 
       team_ratings = Util.team_rating(game, rank: rank)
-      c = Util.util_c(team_ratings, env.beta_sq)
+      c = Util.util_c(team_ratings, model.beta_sq)
       sum_q = Util.util_sum_q(team_ratings, c)
       a = Util.util_a(team_ratings)
 
@@ -33,7 +33,7 @@ module OpenSkill
         tr.team.map { |player|
           share = player.sigma**2 / tr.sigma_sq
           new_mu = player.mu + share * omega
-          new_sigma = player.sigma * Math.sqrt([1 - share * delta, env.epsilon].max)
+          new_sigma = player.sigma * Math.sqrt([1 - share * delta, model.epsilon].max)
           Rating.new(new_mu, new_sigma)
         }
       }

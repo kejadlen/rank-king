@@ -88,80 +88,80 @@ class TestStatistics < Minitest::Test
 end
 
 # https://github.com/philihp/openskill.js/blob/main/src/__tests__/constants.test.ts
-class TestEnv < Minitest::Test
+class TestModel < Minitest::Test
   def test_z_defaults_to_3
-    env = OpenSkill::Model.new.env
-    assert_equal 3, env.z
+    model = OpenSkill::Model.new
+    assert_equal 3, model.z
   end
 
   def test_z_accepts_override
-    env = OpenSkill::Model.new(z: 2).env
-    assert_equal 2, env.z
-    assert_equal 6.25, env.beta
-    assert_equal 39.0625, env.beta_sq
+    model = OpenSkill::Model.new(z: 2)
+    assert_equal 2, model.z
+    assert_equal 6.25, model.beta
+    assert_equal 39.0625, model.beta_sq
   end
 
   def test_mu_defaults_to_25
-    env = OpenSkill::Model.new.env
-    assert_equal 25, env.mu
+    model = OpenSkill::Model.new
+    assert_equal 25, model.mu
   end
 
   def test_mu_accepts_override
-    env = OpenSkill::Model.new(mu: 300).env
-    assert_equal 50, env.beta
-    assert_equal 2500, env.beta_sq
-    assert_equal 3, env.z
+    model = OpenSkill::Model.new(mu: 300)
+    assert_equal 50, model.beta
+    assert_equal 2500, model.beta_sq
+    assert_equal 3, model.z
   end
 
   def test_tau_defaults_to_nil
-    assert_nil OpenSkill::Model.new.env.tau
+    assert_nil OpenSkill::Model.new.tau
   end
 
   def test_tau_accepts_override
-    env = OpenSkill::Model.new(tau: 0.0042).env
-    assert_equal 0.0042, env.tau
+    model = OpenSkill::Model.new(tau: 0.0042)
+    assert_equal 0.0042, model.tau
   end
 
   def test_sigma_default
-    assert_in_delta 8.333333333333334, OpenSkill::Model.new.env.sigma
+    assert_in_delta 8.333333333333334, OpenSkill::Model.new.sigma
   end
 
   def test_sigma_accepts_override
-    env = OpenSkill::Model.new(sigma: 7).env
-    assert_equal 3.5, env.beta
-    assert_equal 12.25, env.beta_sq
+    model = OpenSkill::Model.new(sigma: 7)
+    assert_equal 3.5, model.beta
+    assert_equal 12.25, model.beta_sq
   end
 
   def test_epsilon_default
-    assert_equal 0.0001, OpenSkill::Model.new.env.epsilon
+    assert_equal 0.0001, OpenSkill::Model.new.epsilon
   end
 
   def test_epsilon_accepts_override
-    env = OpenSkill::Model.new(epsilon: 0.001).env
-    assert_equal 0.001, env.epsilon
+    model = OpenSkill::Model.new(epsilon: 0.001)
+    assert_equal 0.001, model.epsilon
   end
 
   def test_beta_default
-    assert_in_delta 4.166666666666667, OpenSkill::Model.new.env.beta
+    assert_in_delta 4.166666666666667, OpenSkill::Model.new.beta
   end
 
   def test_beta_accepts_override
-    env = OpenSkill::Model.new(beta: 100).env
-    assert_equal 100, env.beta
-    assert_equal 10000, env.beta_sq
+    model = OpenSkill::Model.new(beta: 100)
+    assert_equal 100, model.beta
+    assert_equal 10000, model.beta_sq
   end
 
   def test_beta_sq_default
-    assert_in_delta 17.361111111111114, OpenSkill::Model.new.env.beta_sq
+    assert_in_delta 17.361111111111114, OpenSkill::Model.new.beta_sq
   end
 
   def test_limit_sigma_defaults_false
-    refute OpenSkill::Model.new.env.limit_sigma
+    refute OpenSkill::Model.new.limit_sigma
   end
 
   def test_limit_sigma_accepts_flag
-    env = OpenSkill::Model.new(limit_sigma: true).env
-    assert env.limit_sigma
+    model = OpenSkill::Model.new(limit_sigma: true)
+    assert model.limit_sigma
   end
 end
 
@@ -365,14 +365,14 @@ class TestUtilC < Minitest::Test
     team1 = [r]
     team2 = [r, r]
     team_ratings = OpenSkill::Util.team_rating([team2, team1])
-    c = OpenSkill::Util.util_c(team_ratings, @model.env.beta_sq)
+    c = OpenSkill::Util.util_c(team_ratings, @model.beta_sq)
     assert_in_delta 15.590239, c, 0.001
   end
 
   def test_util_c_5v5
     r = @model.rating
     team_ratings = OpenSkill::Util.team_rating([[r] * 5, [r] * 5])
-    c = OpenSkill::Util.util_c(team_ratings, @model.env.beta_sq)
+    c = OpenSkill::Util.util_c(team_ratings, @model.beta_sq)
     assert_in_delta 27.003, c, 0.001
   end
 end
@@ -388,7 +388,7 @@ class TestUtilSumQ < Minitest::Test
     team1 = [r]
     team2 = [r, r]
     team_ratings = OpenSkill::Util.team_rating([team1, team2])
-    c = OpenSkill::Util.util_c(team_ratings, @model.env.beta_sq)
+    c = OpenSkill::Util.util_c(team_ratings, @model.beta_sq)
     sum_q = OpenSkill::Util.util_sum_q(team_ratings, c)
     assert_equal [29.67892702634643, 24.70819334370875], sum_q
   end
@@ -396,7 +396,7 @@ class TestUtilSumQ < Minitest::Test
   def test_util_sum_q_5v5
     r = @model.rating
     team_ratings = OpenSkill::Util.team_rating([[r] * 5, [r] * 5])
-    c = OpenSkill::Util.util_c(team_ratings, @model.env.beta_sq)
+    c = OpenSkill::Util.util_c(team_ratings, @model.beta_sq)
     sum_q = OpenSkill::Util.util_sum_q(team_ratings, c)
     assert_in_delta 204.84, sum_q[0], 0.01
     assert_in_delta 102.42, sum_q[1], 0.01
@@ -439,20 +439,20 @@ class TestPlackettLuce < Minitest::Test
 
   def test_solo_game_unchanged
     r = @model.rating
-    result = OpenSkill::PlackettLuce.rate([[r]], @model.env)
+    result = OpenSkill::PlackettLuce.rate([[r]], @model)
     assert_equal [[r]], result
   end
 
   def test_2p_ffa
     r = @model.rating
-    result = OpenSkill::PlackettLuce.rate([[r], [r]], @model.env)
+    result = OpenSkill::PlackettLuce.rate([[r], [r]], @model)
     assert_rating 27.63523138347365, 8.065506316323548, result[0][0]
     assert_rating 22.36476861652635, 8.065506316323548, result[1][0]
   end
 
   def test_3p_ffa
     r = @model.rating
-    result = OpenSkill::PlackettLuce.rate([[r], [r], [r]], @model.env)
+    result = OpenSkill::PlackettLuce.rate([[r], [r], [r]], @model)
     assert_rating 27.868876552746237, 8.204837030780652, result[0][0]
     assert_rating 25.717219138186557, 8.057829747583874, result[1][0]
     assert_rating 21.413904309067206, 8.057829747583874, result[2][0]
@@ -460,7 +460,7 @@ class TestPlackettLuce < Minitest::Test
 
   def test_4p_ffa
     r = @model.rating
-    result = OpenSkill::PlackettLuce.rate([[r], [r], [r], [r]], @model.env)
+    result = OpenSkill::PlackettLuce.rate([[r], [r], [r], [r]], @model)
     assert_rating 27.795084971874736, 8.263160757613477, result[0][0]
     assert_rating 26.552824984374855, 8.179213704945203, result[1][0]
     assert_rating 24.68943500312503, 8.083731307186588, result[2][0]
@@ -469,7 +469,7 @@ class TestPlackettLuce < Minitest::Test
 
   def test_5p_ffa
     r = @model.rating
-    result = OpenSkill::PlackettLuce.rate([[r], [r], [r], [r], [r]], @model.env)
+    result = OpenSkill::PlackettLuce.rate([[r], [r], [r], [r], [r]], @model)
     assert_rating 27.666666666666668, 8.290556877154474, result[0][0]
     assert_rating 26.833333333333332, 8.240145629781066, result[1][0]
     assert_rating 25.72222222222222, 8.179996679645559, result[2][0]
@@ -479,7 +479,7 @@ class TestPlackettLuce < Minitest::Test
 
   def test_3_teams_different_sizes
     r = @model.rating
-    result = OpenSkill::PlackettLuce.rate([[r, r, r], [r], [r, r]], @model.env)
+    result = OpenSkill::PlackettLuce.rate([[r, r, r], [r], [r, r]], @model)
     assert_rating 25.939870821784513, 8.247641552260456, result[0][0]
     assert_rating 25.939870821784513, 8.247641552260456, result[0][1]
     assert_rating 25.939870821784513, 8.247641552260456, result[0][2]
