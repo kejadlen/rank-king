@@ -3,6 +3,9 @@
 # Port of https://github.com/philihp/openskill.js/blob/main/src/constants.ts
 
 module OpenSkill
+  Env = Data.define(:mu, :sigma, :beta, :beta_sq, :two_beta_sq,
+                    :epsilon, :z, :alpha, :target, :tau, :limit_sigma)
+
   def self.constants(**options)
     z = options.fetch(:z, 3)
     mu = options.fetch(:mu, 25)
@@ -18,18 +21,10 @@ module OpenSkill
 
     beta_sq = beta**2
 
-    {
-      sigma: sigma,
-      mu: mu,
-      epsilon: epsilon,
+    Env.new(
+      mu:, sigma:, beta:, beta_sq:,
       two_beta_sq: 2 * beta_sq,
-      beta: beta,
-      beta_sq: beta_sq,
-      z: z,
-      alpha: alpha,
-      target: target,
-      tau: tau,
-      limit_sigma: limit_sigma,
-    }
+      epsilon:, z:, alpha:, target:, tau:, limit_sigma:,
+    )
   end
 end

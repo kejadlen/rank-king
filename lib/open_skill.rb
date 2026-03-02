@@ -14,6 +14,6 @@ require_relative "open_skill/ordinal"
 module OpenSkill
   def self.rating(**options)
     env = constants(**options)
-    Rating.new(env[:mu], env[:sigma])
+    Rating.new(env.mu, env.sigma)
   end
 end

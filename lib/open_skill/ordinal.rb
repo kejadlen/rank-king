@@ -5,6 +5,6 @@
 module OpenSkill
   def self.ordinal(rating, **options)
     env = constants(**options)
-    env[:target] + env[:alpha] * (rating.mu - env[:z] * rating.sigma)
+    env.target + env.alpha * (rating.mu - env.z * rating.sigma)
   end
 end

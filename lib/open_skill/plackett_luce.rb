@@ -7,7 +7,7 @@ module OpenSkill
     def self.rate(game, **options)
       return game if game.length <= 1
 
-      epsilon = OpenSkill.constants(**options)[:epsilon]
+      epsilon = OpenSkill.constants(**options).epsilon
 
       team_ratings = Util.team_rating(game, **options)
       c = Util.util_c(team_ratings, **options)

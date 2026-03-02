@@ -42,7 +42,7 @@ module OpenSkill
     end
 
     def self.util_c(team_ratings, **)
-      beta_sq = OpenSkill.constants(**)[:beta_sq]
+      beta_sq = OpenSkill.constants(**).beta_sq
       Math.sqrt(team_ratings.sum { |tr| tr.sigma_sq + beta_sq })
     end
 

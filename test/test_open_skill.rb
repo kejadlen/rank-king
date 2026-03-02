@@ -91,78 +91,78 @@ end
 class TestConstants < Minitest::Test
   def test_z_defaults_to_3
     env = OpenSkill.constants
-    assert_equal 3, env[:z]
+    assert_equal 3, env.z
   end
 
   def test_z_accepts_override
     env = OpenSkill.constants(z: 2)
-    assert_equal 2, env[:z]
-    assert_equal 6.25, env[:beta]
-    assert_equal 39.0625, env[:beta_sq]
+    assert_equal 2, env.z
+    assert_equal 6.25, env.beta
+    assert_equal 39.0625, env.beta_sq
   end
 
   def test_mu_defaults_to_25
     env = OpenSkill.constants
-    assert_equal 25, env[:mu]
+    assert_equal 25, env.mu
   end
 
   def test_mu_accepts_override
     env = OpenSkill.constants(mu: 300)
-    assert_equal 50, env[:beta]
-    assert_equal 2500, env[:beta_sq]
-    assert_in_delta 1, env[:tau]
-    assert_equal 3, env[:z]
+    assert_equal 50, env.beta
+    assert_equal 2500, env.beta_sq
+    assert_in_delta 1, env.tau
+    assert_equal 3, env.z
   end
 
   def test_tau_default
-    assert_in_delta 0.08333333, OpenSkill.constants[:tau]
+    assert_in_delta 0.08333333, OpenSkill.constants.tau
   end
 
   def test_tau_accepts_override
     env = OpenSkill.constants(tau: 0.0042)
-    assert_equal 0.0042, env[:tau]
+    assert_equal 0.0042, env.tau
   end
 
   def test_sigma_default
-    assert_in_delta 8.333333333333334, OpenSkill.constants[:sigma]
+    assert_in_delta 8.333333333333334, OpenSkill.constants.sigma
   end
 
   def test_sigma_accepts_override
     env = OpenSkill.constants(sigma: 7)
-    assert_equal 3.5, env[:beta]
-    assert_equal 12.25, env[:beta_sq]
+    assert_equal 3.5, env.beta
+    assert_equal 12.25, env.beta_sq
   end
 
   def test_epsilon_default
-    assert_equal 0.0001, OpenSkill.constants[:epsilon]
+    assert_equal 0.0001, OpenSkill.constants.epsilon
   end
 
   def test_epsilon_accepts_override
     env = OpenSkill.constants(epsilon: 0.001)
-    assert_equal 0.001, env[:epsilon]
+    assert_equal 0.001, env.epsilon
   end
 
   def test_beta_default
-    assert_in_delta 4.166666666666667, OpenSkill.constants[:beta]
+    assert_in_delta 4.166666666666667, OpenSkill.constants.beta
   end
 
   def test_beta_accepts_override
     env = OpenSkill.constants(beta: 100)
-    assert_equal 100, env[:beta]
-    assert_equal 10000, env[:beta_sq]
+    assert_equal 100, env.beta
+    assert_equal 10000, env.beta_sq
   end
 
   def test_beta_sq_default
-    assert_in_delta 17.361111111111114, OpenSkill.constants[:beta_sq]
+    assert_in_delta 17.361111111111114, OpenSkill.constants.beta_sq
   end
 
   def test_limit_sigma_defaults_false
-    refute OpenSkill.constants[:limit_sigma]
+    refute OpenSkill.constants.limit_sigma
   end
 
   def test_limit_sigma_accepts_flag
     env = OpenSkill.constants(limit_sigma: true)
-    assert env[:limit_sigma]
+    assert env.limit_sigma
   end
 end
 
