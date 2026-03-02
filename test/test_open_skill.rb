@@ -357,14 +357,14 @@ class TestUtilC < Minitest::Test
     team1 = [r]
     team2 = [r, r]
     team_ratings = OpenSkill::Util.team_rating([team2, team1])
-    c = OpenSkill::Util.util_c(team_ratings, OpenSkill.constants)
+    c = OpenSkill::Util.util_c(team_ratings, OpenSkill.constants.beta_sq)
     assert_in_delta 15.590239, c, 0.001
   end
 
   def test_util_c_5v5
     r = OpenSkill.rating
     team_ratings = OpenSkill::Util.team_rating([[r] * 5, [r] * 5])
-    c = OpenSkill::Util.util_c(team_ratings, OpenSkill.constants)
+    c = OpenSkill::Util.util_c(team_ratings, OpenSkill.constants.beta_sq)
     assert_in_delta 27.003, c, 0.001
   end
 end
@@ -376,7 +376,7 @@ class TestUtilSumQ < Minitest::Test
     team1 = [r]
     team2 = [r, r]
     team_ratings = OpenSkill::Util.team_rating([team1, team2])
-    c = OpenSkill::Util.util_c(team_ratings, OpenSkill.constants)
+    c = OpenSkill::Util.util_c(team_ratings, OpenSkill.constants.beta_sq)
     sum_q = OpenSkill::Util.util_sum_q(team_ratings, c)
     assert_equal [29.67892702634643, 24.70819334370875], sum_q
   end
@@ -384,7 +384,7 @@ class TestUtilSumQ < Minitest::Test
   def test_util_sum_q_5v5
     r = OpenSkill.rating
     team_ratings = OpenSkill::Util.team_rating([[r] * 5, [r] * 5])
-    c = OpenSkill::Util.util_c(team_ratings, OpenSkill.constants)
+    c = OpenSkill::Util.util_c(team_ratings, OpenSkill.constants.beta_sq)
     sum_q = OpenSkill::Util.util_sum_q(team_ratings, c)
     assert_in_delta 204.84, sum_q[0], 0.01
     assert_in_delta 102.42, sum_q[1], 0.01

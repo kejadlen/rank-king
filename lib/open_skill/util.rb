@@ -41,8 +41,8 @@ module OpenSkill
       }
     end
 
-    def self.util_c(team_ratings, env)
-      Math.sqrt(team_ratings.sum { |tr| tr.sigma_sq + env.beta_sq })
+    def self.util_c(team_ratings, beta_sq)
+      Math.sqrt(team_ratings.sum { |tr| tr.sigma_sq + beta_sq })
     end
 
     def self.util_sum_q(team_ratings, c)

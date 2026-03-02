@@ -8,7 +8,7 @@ module OpenSkill
       return game if game.length <= 1
 
       team_ratings = Util.team_rating(game, rank: rank)
-      c = Util.util_c(team_ratings, env)
+      c = Util.util_c(team_ratings, env.beta_sq)
       sum_q = Util.util_sum_q(team_ratings, c)
       a = Util.util_a(team_ratings)
 
