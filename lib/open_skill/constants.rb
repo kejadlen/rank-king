@@ -14,7 +14,7 @@ module OpenSkill
     target = options.fetch(:target, 0)
     prevent_sigma_increase = options.fetch(:prevent_sigma_increase, false)
 
-    tau = options.fetch(:tau, mu / 300.0)
+    tau = options[:tau]
     sigma = options.fetch(:sigma, mu.to_f / z)
     beta = options.fetch(:beta, sigma / 2.0)
     limit_sigma = options.fetch(:limit_sigma, prevent_sigma_increase)

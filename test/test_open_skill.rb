@@ -110,12 +110,11 @@ class TestConstants < Minitest::Test
     env = OpenSkill.constants(mu: 300)
     assert_equal 50, env.beta
     assert_equal 2500, env.beta_sq
-    assert_in_delta 1, env.tau
     assert_equal 3, env.z
   end
 
-  def test_tau_default
-    assert_in_delta 0.08333333, OpenSkill.constants.tau
+  def test_tau_defaults_to_nil
+    assert_nil OpenSkill.constants.tau
   end
 
   def test_tau_accepts_override

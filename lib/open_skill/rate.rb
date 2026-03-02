@@ -9,7 +9,7 @@ module OpenSkill
     processed_teams = teams
 
     # If tau is provided, use additive dynamics factor to keep ratings pliable
-    if options.key?(:tau)
+    if env.tau
       tau_sq = env.tau**2
       processed_teams = teams.map { |team|
         team.map { |p| Rating.new(p.mu, Math.sqrt(p.sigma**2 + tau_sq)) }
@@ -29,7 +29,7 @@ module OpenSkill
     result = rank.zip(new_ratings).sort_by(&:first).map(&:last)
 
     # Cap sigma at pre-tau value so ordinal never drops after a win
-    if options.key?(:tau) && env.limit_sigma
+    if env.tau && env.limit_sigma
       result = result.map.with_index { |team, i|
         team.map.with_index { |p, j|
           Rating.new(p.mu, [p.sigma, teams[i][j].sigma].min)
