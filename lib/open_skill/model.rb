@@ -4,18 +4,9 @@ module OpenSkill
   class Model
     attr_reader :env
 
-    def initialize(**options)
-      z = options.fetch(:z, 3)
-      mu = options.fetch(:mu, 25)
-      epsilon = options.fetch(:epsilon, 0.0001)
-      alpha = options.fetch(:alpha, 1)
-      target = options.fetch(:target, 0)
-      prevent_sigma_increase = options.fetch(:prevent_sigma_increase, false)
-
-      tau = options[:tau]
-      sigma = options.fetch(:sigma, mu.to_f / z)
-      beta = options.fetch(:beta, sigma / 2.0)
-      limit_sigma = options.fetch(:limit_sigma, prevent_sigma_increase)
+    def initialize(mu: 25, z: 3, sigma: mu.to_f / z, beta: sigma / 2.0,
+                   epsilon: 0.0001, alpha: 1, target: 0, tau: nil,
+                   prevent_sigma_increase: false, limit_sigma: prevent_sigma_increase)
 
       beta_sq = beta**2
 
