@@ -19,6 +19,7 @@ A **List** has **Items** and **Axes**. A **Matchup** presents two **Items** on a
 - Define one or more axes to rank along
 - Pick matchups manually, get random ones, or use suggested matchups (the pair that reduces overall variance the most)
 - View ratings per axis
+- Publish a public, read-only view of an axis's rankings to share with others
 
 ## Design decisions
 
@@ -30,3 +31,4 @@ A **List** has **Items** and **Axes**. A **Matchup** presents two **Items** on a
 - Persistence
 - Users and auth
 - API
+- 2×2 matrix view plotting items across two axes
