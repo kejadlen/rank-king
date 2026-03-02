@@ -9,7 +9,7 @@ module OpenSkill
       @epsilon = model.epsilon
     end
 
-    def rate(game, rank: nil)
+    def rate(game, rank:)
       return game if game.length <= 1
 
       team_ratings = Util.team_rating(game, rank: rank)

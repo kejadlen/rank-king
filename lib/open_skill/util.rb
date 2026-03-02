@@ -12,14 +12,10 @@ module OpenSkill
       end
     end
 
-    def self.rankings(teams, rank)
-      return [] if teams.empty?
-
-      team_scores = teams.map.with_index { |_, i| rank&.at(i) || i }
-
+    def self.rankings(rank)
       s = 0
-      team_scores.map.with_index { |_, j|
-        s = j if j > 0 && team_scores[j - 1] < team_scores[j]
+      rank.map.with_index { |_, j|
+        s = j if j > 0 && rank[j - 1] < rank[j]
         s
       }
     end
@@ -30,8 +26,8 @@ module OpenSkill
       [nil, *ranks, nil].each_cons(3).map { |l, _, r| [l, r].compact }
     end
 
-    def self.team_rating(game, rank: nil)
-      game.zip(rankings(game, rank)).map { |team, rank|
+    def self.team_rating(game, rank:)
+      game.zip(rankings(rank)).map { |team, rank|
         TeamRating.new(
           mu: team.sum(&:mu),
           sigma_sq: team.sum { |p| p.sigma**2 },
