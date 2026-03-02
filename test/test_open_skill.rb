@@ -88,79 +88,79 @@ class TestStatistics < Minitest::Test
 end
 
 # https://github.com/philihp/openskill.js/blob/main/src/__tests__/constants.test.ts
-class TestConstants < Minitest::Test
+class TestEnv < Minitest::Test
   def test_z_defaults_to_3
-    env = OpenSkill.constants
+    env = OpenSkill::Model.new.env
     assert_equal 3, env.z
   end
 
   def test_z_accepts_override
-    env = OpenSkill.constants(z: 2)
+    env = OpenSkill::Model.new(z: 2).env
     assert_equal 2, env.z
     assert_equal 6.25, env.beta
     assert_equal 39.0625, env.beta_sq
   end
 
   def test_mu_defaults_to_25
-    env = OpenSkill.constants
+    env = OpenSkill::Model.new.env
     assert_equal 25, env.mu
   end
 
   def test_mu_accepts_override
-    env = OpenSkill.constants(mu: 300)
+    env = OpenSkill::Model.new(mu: 300).env
     assert_equal 50, env.beta
     assert_equal 2500, env.beta_sq
     assert_equal 3, env.z
   end
 
   def test_tau_defaults_to_nil
-    assert_nil OpenSkill.constants.tau
+    assert_nil OpenSkill::Model.new.env.tau
   end
 
   def test_tau_accepts_override
-    env = OpenSkill.constants(tau: 0.0042)
+    env = OpenSkill::Model.new(tau: 0.0042).env
     assert_equal 0.0042, env.tau
   end
 
   def test_sigma_default
-    assert_in_delta 8.333333333333334, OpenSkill.constants.sigma
+    assert_in_delta 8.333333333333334, OpenSkill::Model.new.env.sigma
   end
 
   def test_sigma_accepts_override
-    env = OpenSkill.constants(sigma: 7)
+    env = OpenSkill::Model.new(sigma: 7).env
     assert_equal 3.5, env.beta
     assert_equal 12.25, env.beta_sq
   end
 
   def test_epsilon_default
-    assert_equal 0.0001, OpenSkill.constants.epsilon
+    assert_equal 0.0001, OpenSkill::Model.new.env.epsilon
   end
 
   def test_epsilon_accepts_override
-    env = OpenSkill.constants(epsilon: 0.001)
+    env = OpenSkill::Model.new(epsilon: 0.001).env
     assert_equal 0.001, env.epsilon
   end
 
   def test_beta_default
-    assert_in_delta 4.166666666666667, OpenSkill.constants.beta
+    assert_in_delta 4.166666666666667, OpenSkill::Model.new.env.beta
   end
 
   def test_beta_accepts_override
-    env = OpenSkill.constants(beta: 100)
+    env = OpenSkill::Model.new(beta: 100).env
     assert_equal 100, env.beta
     assert_equal 10000, env.beta_sq
   end
 
   def test_beta_sq_default
-    assert_in_delta 17.361111111111114, OpenSkill.constants.beta_sq
+    assert_in_delta 17.361111111111114, OpenSkill::Model.new.env.beta_sq
   end
 
   def test_limit_sigma_defaults_false
-    refute OpenSkill.constants.limit_sigma
+    refute OpenSkill::Model.new.env.limit_sigma
   end
 
   def test_limit_sigma_accepts_flag
-    env = OpenSkill.constants(limit_sigma: true)
+    env = OpenSkill::Model.new(limit_sigma: true).env
     assert env.limit_sigma
   end
 end
@@ -168,53 +168,53 @@ end
 # https://github.com/philihp/openskill.js/blob/main/src/__tests__/rating.test.ts
 class TestRating < Minitest::Test
   def test_defaults_mu_to_25
-    r = OpenSkill.rating
+    r = OpenSkill::Model.new.rating
     assert_equal 25.0, r.mu
   end
 
   def test_defaults_sigma_to_8_333
-    r = OpenSkill.rating
+    r = OpenSkill::Model.new.rating
     assert_in_delta 8.333, r.sigma, 0.001
   end
 
   def test_accepts_new_mu
-    r = OpenSkill.rating(mu: 42)
+    r = OpenSkill::Model.new(mu: 42).rating
     assert_equal 42, r.mu
     assert_in_delta 42.0 / 3, r.sigma, 0.001
   end
 
   def test_accepts_new_sigma
-    r = OpenSkill.rating(sigma: 6.283185)
+    r = OpenSkill::Model.new(sigma: 6.283185).rating
     assert_equal 25, r.mu
     assert_equal 6.283185, r.sigma
   end
 
   def test_mu_of_zero
-    r = OpenSkill.rating(mu: 0)
+    r = OpenSkill::Model.new(mu: 0).rating
     assert_equal 0, r.mu
     assert_equal 0, r.sigma
   end
 
   def test_sigma_of_zero
-    r = OpenSkill.rating(sigma: 0)
+    r = OpenSkill::Model.new(sigma: 0).rating
     assert_equal 25, r.mu
     assert_equal 0, r.sigma
   end
 
   def test_different_z
-    r = OpenSkill.rating(z: 5)
+    r = OpenSkill::Model.new(z: 5).rating
     assert_equal 25, r.mu
     assert_equal 5, r.sigma
   end
 
   def test_different_z_and_mu
-    r = OpenSkill.rating(mu: 15, z: 3)
+    r = OpenSkill::Model.new(mu: 15, z: 3).rating
     assert_equal 15, r.mu
     assert_equal 5, r.sigma
   end
 
   def test_different_z_and_sigma
-    r = OpenSkill.rating(sigma: 5, z: 3)
+    r = OpenSkill::Model.new(sigma: 5, z: 3).rating
     assert_equal 25, r.mu
     assert_equal 5, r.sigma
   end
@@ -224,18 +224,18 @@ end
 class TestOrdinal < Minitest::Test
   def test_converts_rating_to_ordinal
     r = OpenSkill::Rating.new(5.0, 2.0)
-    assert_equal(-1.0, OpenSkill.ordinal(r))
+    assert_equal(-1.0, OpenSkill::Model.new.ordinal(r))
   end
 
   def test_respects_alpha_and_target
-    r = OpenSkill.rating(mu: 24.0, sigma: 6.0)
-    result = OpenSkill.ordinal(r, alpha: 24.0, target: 1500.0)
+    r = OpenSkill::Model.new(mu: 24.0, sigma: 6.0).rating
+    result = OpenSkill::Model.new(alpha: 24.0, target: 1500.0).ordinal(r)
     assert_equal 1644.0, result
   end
 
   def test_respects_custom_z
-    r = OpenSkill.rating(mu: 24.0, sigma: 6.0, z: 2)
-    result = OpenSkill.ordinal(r, z: 2)
+    r = OpenSkill::Model.new(mu: 24.0, sigma: 6.0, z: 2).rating
+    result = OpenSkill::Model.new(z: 2).ordinal(r)
     assert_equal 12.0, result
   end
 end
@@ -331,8 +331,12 @@ end
 
 # https://github.com/philihp/openskill.js/blob/main/src/__tests__/util/team-rating.test.ts
 class TestTeamRating < Minitest::Test
+  def setup
+    @model = OpenSkill::Model.new
+  end
+
   def test_aggregates_all_players
-    r = OpenSkill.rating
+    r = @model.rating
     team1 = [r]
     team2 = [r, r]
     result = OpenSkill::Util.team_rating([team1, team2])
@@ -341,7 +345,7 @@ class TestTeamRating < Minitest::Test
   end
 
   def test_aggregates_5v5
-    r = OpenSkill.rating
+    r = @model.rating
     result = OpenSkill::Util.team_rating([[r] * 5, [r] * 5])
     assert_in_delta 125, result[0].mu
     assert_in_delta 125, result[1].mu
@@ -352,39 +356,47 @@ end
 
 # https://github.com/philihp/openskill.js/blob/main/src/__tests__/util/util-c.test.ts
 class TestUtilC < Minitest::Test
+  def setup
+    @model = OpenSkill::Model.new
+  end
+
   def test_util_c_computes
-    r = OpenSkill.rating
+    r = @model.rating
     team1 = [r]
     team2 = [r, r]
     team_ratings = OpenSkill::Util.team_rating([team2, team1])
-    c = OpenSkill::Util.util_c(team_ratings, OpenSkill.constants.beta_sq)
+    c = OpenSkill::Util.util_c(team_ratings, @model.env.beta_sq)
     assert_in_delta 15.590239, c, 0.001
   end
 
   def test_util_c_5v5
-    r = OpenSkill.rating
+    r = @model.rating
     team_ratings = OpenSkill::Util.team_rating([[r] * 5, [r] * 5])
-    c = OpenSkill::Util.util_c(team_ratings, OpenSkill.constants.beta_sq)
+    c = OpenSkill::Util.util_c(team_ratings, @model.env.beta_sq)
     assert_in_delta 27.003, c, 0.001
   end
 end
 
 # https://github.com/philihp/openskill.js/blob/main/src/__tests__/util/util-sum-q.test.ts
 class TestUtilSumQ < Minitest::Test
+  def setup
+    @model = OpenSkill::Model.new
+  end
+
   def test_util_sum_q_computes
-    r = OpenSkill.rating
+    r = @model.rating
     team1 = [r]
     team2 = [r, r]
     team_ratings = OpenSkill::Util.team_rating([team1, team2])
-    c = OpenSkill::Util.util_c(team_ratings, OpenSkill.constants.beta_sq)
+    c = OpenSkill::Util.util_c(team_ratings, @model.env.beta_sq)
     sum_q = OpenSkill::Util.util_sum_q(team_ratings, c)
     assert_equal [29.67892702634643, 24.70819334370875], sum_q
   end
 
   def test_util_sum_q_5v5
-    r = OpenSkill.rating
+    r = @model.rating
     team_ratings = OpenSkill::Util.team_rating([[r] * 5, [r] * 5])
-    c = OpenSkill::Util.util_c(team_ratings, OpenSkill.constants.beta_sq)
+    c = OpenSkill::Util.util_c(team_ratings, @model.env.beta_sq)
     sum_q = OpenSkill::Util.util_sum_q(team_ratings, c)
     assert_in_delta 204.84, sum_q[0], 0.01
     assert_in_delta 102.42, sum_q[1], 0.01
@@ -393,22 +405,26 @@ end
 
 # https://github.com/philihp/openskill.js/blob/main/src/__tests__/util/util-a.test.ts
 class TestUtilA < Minitest::Test
+  def setup
+    @model = OpenSkill::Model.new
+  end
+
   def test_util_a_basic
-    r = OpenSkill.rating
+    r = @model.rating
     team_ratings = OpenSkill::Util.team_rating([[r], [r, r]])
     a = OpenSkill::Util.util_a(team_ratings)
     assert_equal [1, 1], a
   end
 
   def test_util_a_four_teams
-    r = OpenSkill.rating
+    r = @model.rating
     team_ratings = OpenSkill::Util.team_rating([[r], [r, r], [r, r], [r]])
     a = OpenSkill::Util.util_a(team_ratings)
     assert_equal [1, 1, 1, 1], a
   end
 
   def test_util_a_with_ties
-    r = OpenSkill.rating
+    r = @model.rating
     team_ratings = OpenSkill::Util.team_rating([[r], [r, r], [r, r], [r]], rank: [1, 1, 1, 4])
     a = OpenSkill::Util.util_a(team_ratings)
     assert_equal [3, 3, 3, 1], a
@@ -417,30 +433,34 @@ end
 
 # https://github.com/philihp/openskill.js/blob/main/src/models/__tests__/plackett-luce.test.ts
 class TestPlackettLuce < Minitest::Test
+  def setup
+    @model = OpenSkill::Model.new
+  end
+
   def test_solo_game_unchanged
-    r = OpenSkill.rating
-    result = OpenSkill::PlackettLuce.rate([[r]], OpenSkill.constants)
+    r = @model.rating
+    result = OpenSkill::PlackettLuce.rate([[r]], @model.env)
     assert_equal [[r]], result
   end
 
   def test_2p_ffa
-    r = OpenSkill.rating
-    result = OpenSkill::PlackettLuce.rate([[r], [r]], OpenSkill.constants)
+    r = @model.rating
+    result = OpenSkill::PlackettLuce.rate([[r], [r]], @model.env)
     assert_rating 27.63523138347365, 8.065506316323548, result[0][0]
     assert_rating 22.36476861652635, 8.065506316323548, result[1][0]
   end
 
   def test_3p_ffa
-    r = OpenSkill.rating
-    result = OpenSkill::PlackettLuce.rate([[r], [r], [r]], OpenSkill.constants)
+    r = @model.rating
+    result = OpenSkill::PlackettLuce.rate([[r], [r], [r]], @model.env)
     assert_rating 27.868876552746237, 8.204837030780652, result[0][0]
     assert_rating 25.717219138186557, 8.057829747583874, result[1][0]
     assert_rating 21.413904309067206, 8.057829747583874, result[2][0]
   end
 
   def test_4p_ffa
-    r = OpenSkill.rating
-    result = OpenSkill::PlackettLuce.rate([[r], [r], [r], [r]], OpenSkill.constants)
+    r = @model.rating
+    result = OpenSkill::PlackettLuce.rate([[r], [r], [r], [r]], @model.env)
     assert_rating 27.795084971874736, 8.263160757613477, result[0][0]
     assert_rating 26.552824984374855, 8.179213704945203, result[1][0]
     assert_rating 24.68943500312503, 8.083731307186588, result[2][0]
@@ -448,8 +468,8 @@ class TestPlackettLuce < Minitest::Test
   end
 
   def test_5p_ffa
-    r = OpenSkill.rating
-    result = OpenSkill::PlackettLuce.rate([[r], [r], [r], [r], [r]], OpenSkill.constants)
+    r = @model.rating
+    result = OpenSkill::PlackettLuce.rate([[r], [r], [r], [r], [r]], @model.env)
     assert_rating 27.666666666666668, 8.290556877154474, result[0][0]
     assert_rating 26.833333333333332, 8.240145629781066, result[1][0]
     assert_rating 25.72222222222222, 8.179996679645559, result[2][0]
@@ -458,8 +478,8 @@ class TestPlackettLuce < Minitest::Test
   end
 
   def test_3_teams_different_sizes
-    r = OpenSkill.rating
-    result = OpenSkill::PlackettLuce.rate([[r, r, r], [r], [r, r]], OpenSkill.constants)
+    r = @model.rating
+    result = OpenSkill::PlackettLuce.rate([[r, r, r], [r], [r, r]], @model.env)
     assert_rating 25.939870821784513, 8.247641552260456, result[0][0]
     assert_rating 25.939870821784513, 8.247641552260456, result[0][1]
     assert_rating 25.939870821784513, 8.247641552260456, result[0][2]
@@ -478,13 +498,17 @@ end
 
 # https://github.com/philihp/openskill.js/blob/main/src/__tests__/rate.test.ts
 class TestRate < Minitest::Test
-  def test_default_plackett_luce
-    a1 = OpenSkill.rating(mu: 29.182, sigma: 4.782)
-    b1 = OpenSkill.rating(mu: 27.174, sigma: 4.922)
-    c1 = OpenSkill.rating(mu: 16.672, sigma: 6.217)
-    d1 = OpenSkill.rating
+  def setup
+    @model = OpenSkill::Model.new
+  end
 
-    result = OpenSkill.rate([[a1], [b1], [c1], [d1]])
+  def test_default_plackett_luce
+    a1 = OpenSkill::Model.new(mu: 29.182, sigma: 4.782).rating
+    b1 = OpenSkill::Model.new(mu: 27.174, sigma: 4.922).rating
+    c1 = OpenSkill::Model.new(mu: 16.672, sigma: 6.217).rating
+    d1 = @model.rating
+
+    result = @model.rate([[a1], [b1], [c1], [d1]])
     assert_rating 30.209971908310553, 4.764898977359521, result[0][0]
     assert_rating 27.64460833689499, 4.882789305097372, result[1][0]
     assert_rating 17.403586731283518, 6.100723440599442, result[2][0]
@@ -492,12 +516,12 @@ class TestRate < Minitest::Test
   end
 
   def test_with_tau
-    a1 = OpenSkill.rating(mu: 29.182, sigma: 4.782)
-    b1 = OpenSkill.rating(mu: 27.174, sigma: 4.922)
-    c1 = OpenSkill.rating(mu: 16.672, sigma: 6.217)
-    d1 = OpenSkill.rating
+    a1 = OpenSkill::Model.new(mu: 29.182, sigma: 4.782).rating
+    b1 = OpenSkill::Model.new(mu: 27.174, sigma: 4.922).rating
+    c1 = OpenSkill::Model.new(mu: 16.672, sigma: 6.217).rating
+    d1 = @model.rating
 
-    result = OpenSkill.rate([[a1], [b1], [c1], [d1]], tau: 0.01)
+    result = OpenSkill::Model.new(tau: 0.01).rate([[a1], [b1], [c1], [d1]])
     assert_rating 30.20997558824299, 4.764909330988368, result[0][0]
     assert_rating 27.64461002009721, 4.882799245921361, result[1][0]
     assert_rating 17.403587237635527, 6.100731158882956, result[2][0]
@@ -505,34 +529,34 @@ class TestRate < Minitest::Test
   end
 
   def test_with_tau_and_prevent_sigma_increase
-    a1 = OpenSkill.rating(mu: 6.672, sigma: 0.0001)
-    b1 = OpenSkill.rating(mu: 29.182, sigma: 4.782)
+    a1 = OpenSkill::Model.new(mu: 6.672, sigma: 0.0001).rating
+    b1 = OpenSkill::Model.new(mu: 29.182, sigma: 4.782).rating
 
-    result = OpenSkill.rate([[a1], [b1]], tau: 0.01, limit_sigma: true)
+    result = OpenSkill::Model.new(tau: 0.01, limit_sigma: true).rate([[a1], [b1]])
     assert_operator result[0][0].sigma, :<=, a1.sigma
     assert_rating 6.672012533190158, 0.0001, result[0][0]
     assert_rating 26.316243774876106, 4.7540633621019, result[1][0]
   end
 
   def test_reverses_rank
-    r = OpenSkill.rating
-    result = OpenSkill.rate([[r], [r]], rank: [2, 1])
+    r = @model.rating
+    result = @model.rate([[r], [r]], rank: [2, 1])
     loser, winner = result[0][0], result[1][0]
     assert_rating 27.63523138347365, 8.065506316323548, winner
     assert_rating 22.36476861652635, 8.065506316323548, loser
   end
 
   def test_keeps_rank
-    r = OpenSkill.rating
-    result = OpenSkill.rate([[r], [r]], rank: [1, 2])
+    r = @model.rating
+    result = @model.rate([[r], [r]], rank: [1, 2])
     loser, winner = result[0][0], result[1][0]
     assert_rating 22.36476861652635, 8.065506316323548, winner
     assert_rating 27.63523138347365, 8.065506316323548, loser
   end
 
   def test_misordered_rank
-    d1 = OpenSkill.rating
-    result = OpenSkill.rate([[d1], [d1], [d1], [d1]], rank: [2, 1, 4, 3])
+    d1 = @model.rating
+    result = @model.rate([[d1], [d1], [d1], [d1]], rank: [2, 1, 4, 3])
     assert_rating 26.552824984374855, 8.179213704945203, result[0][0]
     assert_rating 27.795084971874736, 8.263160757613477, result[1][0]
     assert_rating 20.96265504062538, 8.083731307186588, result[2][0]
@@ -540,54 +564,54 @@ class TestRate < Minitest::Test
   end
 
   def test_allows_ties
-    a = OpenSkill.rating(mu: 10, sigma: 8)
-    b = OpenSkill.rating(mu: 5, sigma: 10)
-    c = OpenSkill.rating(mu: 0, sigma: 12)
-    result = OpenSkill.rate([[a], [b], [c]], rank: [1, 2, 2])
+    a = OpenSkill::Model.new(mu: 10, sigma: 8).rating
+    b = OpenSkill::Model.new(mu: 5, sigma: 10).rating
+    c = OpenSkill::Model.new(mu: 0, sigma: 12).rating
+    result = @model.rate([[a], [b], [c]], rank: [1, 2, 2])
     assert_rating 11.942833056030613, 7.926463661123746, result[0][0]
     assert_rating 2.938193791485662, 9.65347573412201, result[1][0]
     assert_rating(-1.4023734358082325, 11.323360667700934, result[2][0])
   end
 
   def test_four_way_tie_newbies
-    r = OpenSkill.rating
-    result = OpenSkill.rate([[r], [r], [r], [r]], rank: [1, 1, 1, 1])
+    r = @model.rating
+    result = @model.rate([[r], [r], [r], [r]], rank: [1, 1, 1, 1])
     result.flatten.each do |rating|
       assert_rating 25, 8.263160757613477, rating
     end
   end
 
   def test_score_instead_of_rank
-    e1 = OpenSkill.rating
-    result = OpenSkill.rate([[e1], [e1], [e1]], score: [1, 1, 1])
+    e1 = @model.rating
+    result = @model.rate([[e1], [e1], [e1]], score: [1, 1, 1])
     result.flatten.each do |rating|
       assert_rating 25, 8.204837030780652, rating
     end
   end
 
   def test_tau_term
-    a = OpenSkill.rating(mu: 25, sigma: 3)
-    b = OpenSkill.rating(mu: 25, sigma: 3)
-    result = OpenSkill.rate([[a], [b]], tau: 0.3)
+    a = OpenSkill::Model.new(mu: 25, sigma: 3).rating
+    b = OpenSkill::Model.new(mu: 25, sigma: 3).rating
+    result = OpenSkill::Model.new(tau: 0.3).rate([[a], [b]])
     assert_rating 25.624880438870754, 2.9879993738476953, result[0][0]
     assert_rating 24.375119561129246, 2.9879993738476953, result[1][0]
   end
 
   def test_prevents_sigma_from_rising
-    a = OpenSkill.rating(mu: 40, sigma: 3)
-    b = OpenSkill.rating(mu: -20, sigma: 3)
-    result = OpenSkill.rate([[a], [b]], tau: 0.3, limit_sigma: true)
+    a = OpenSkill::Model.new(mu: 40, sigma: 3).rating
+    b = OpenSkill::Model.new(mu: -20, sigma: 3).rating
+    result = OpenSkill::Model.new(tau: 0.3, limit_sigma: true).rate([[a], [b]])
     assert_rating 40.00032667136128, 3, result[0][0]
     assert_rating(-20.000326671361275, 3, result[1][0])
   end
 
   def test_teams
-    a1 = OpenSkill.rating(mu: 29.182, sigma: 4.782)
-    b1 = OpenSkill.rating(mu: 27.174, sigma: 4.922)
-    c1 = OpenSkill.rating(mu: 16.672, sigma: 6.217)
-    d1 = OpenSkill.rating
+    a1 = OpenSkill::Model.new(mu: 29.182, sigma: 4.782).rating
+    b1 = OpenSkill::Model.new(mu: 27.174, sigma: 4.922).rating
+    c1 = OpenSkill::Model.new(mu: 16.672, sigma: 6.217).rating
+    d1 = @model.rating
 
-    result = OpenSkill.rate([[a1, b1], [c1, d1]])
+    result = @model.rate([[a1, b1], [c1, d1]])
     assert_rating 29.607218266047376, 4.754597315295896, result[0][0]
     assert_rating 27.624480490655575, 4.89211428863373, result[0][1]
     assert_rating 15.953288649990139, 6.125357588584119, result[1][0]
@@ -604,25 +628,29 @@ end
 
 # https://github.com/philihp/openskill.js/blob/main/src/models/__tests__/plackett-luce-series.test.ts
 class TestPlackettLuceSeries < Minitest::Test
-  def test_series
-    p00 = OpenSkill.rating
-    p10 = OpenSkill.rating
-    p20 = OpenSkill.rating
-    p30 = OpenSkill.rating
-    p40 = OpenSkill.rating
+  def setup
+    @model = OpenSkill::Model.new
+  end
 
-    r1 = OpenSkill.rate([[p00], [p10], [p20], [p30], [p40]], score: [9, 7, 7, 5, 5])
+  def test_series
+    p00 = @model.rating
+    p10 = @model.rating
+    p20 = @model.rating
+    p30 = @model.rating
+    p40 = @model.rating
+
+    r1 = @model.rate([[p00], [p10], [p20], [p30], [p40]], score: [9, 7, 7, 5, 5])
     p01, p11, p21, p31, p41 = r1.map(&:first)
 
     p02 = p01
     p32 = p31
 
-    r2 = OpenSkill.rate([[p41], [p21], [p11]], score: [9, 5, 5])
+    r2 = @model.rate([[p41], [p21], [p11]], score: [9, 5, 5])
     p42, p22, p12 = r2.map(&:first)
 
     p43 = p42
 
-    r3 = OpenSkill.rate([[p32], [p12], [p22], [p02]], score: [9, 9, 7, 7])
+    r3 = @model.rate([[p32], [p12], [p22], [p02]], score: [9, 9, 7, 7])
     p33, p13, p23, p03 = r3.map(&:first)
 
     assert_in_delta 26.353761103, p03.mu, 0.001
