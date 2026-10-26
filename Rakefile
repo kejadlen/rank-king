@@ -9,4 +9,9 @@ task :dev do
   sh "fd | entr -r rackup"
 end
 
-task default: :test
+desc "Type check lib against the RBS comments in it"
+task :steep do
+  sh "steep", "check"
+end
+
+task default: %i[ steep test ]

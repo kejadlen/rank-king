@@ -12,13 +12,23 @@ module OpenSkill
 
   # Intermediate structure for team-level aggregation during rating.
   # Produced by Game#team_ratings, consumed by PlackettLuce and Util helpers.
-  TeamRating = Data.define(:mu, :sigma_sq, :team, :rank) do
+  # Signed in sig/open_skill/rating.rbs: a Data class.
+  # @rbs skip
+  TeamRating = Data.define(:mu, :sigma_sq, :team, :rank)
+
+  # Reopened rather than defined in the block above, so the inline
+  # parser reads its type.
+  class TeamRating
+    #: () -> [Float, Float, Array[Rating], Integer]
     def to_a = [mu, sigma_sq, team, rank]
   end
 
   class Game
-    attr_reader :rank_groups, :teams, :rank
+    attr_reader :rank_groups #: Array[Array[Array[Rating]]]
+    attr_reader :teams #: Array[Array[Rating]]
+    attr_reader :rank #: Array[Integer]
 
+    #: (*Array[Array[Rating]] rank_groups) -> void
     def initialize(*rank_groups)
       @rank_groups = rank_groups.freeze
       @teams = @rank_groups.flatten(1).freeze
@@ -26,17 +36,19 @@ module OpenSkill
       freeze
     end
 
+    #: (Array[Rating] winner, Array[Rating] loser) -> Game
     def self.win_lose(winner, loser)
       new([winner], [loser])
     end
 
+    #: () -> Array[TeamRating]
     def team_ratings
       teams.zip(rankings).map { |team, rank|
         TeamRating.new(
-          mu: team.sum(&:mu),
-          sigma_sq: team.sum { |p| p.sigma**2 },
+          mu: team.sum(0.0) { |p| p.mu },
+          sigma_sq: team.sum(0.0) { |p| p.sigma**2 },
           team: team,
-          rank: rank,
+          rank: rank, #: Integer
         )
       }
     end
@@ -49,6 +61,7 @@ module OpenSkill
     # The prior implementation produced sparse/positional ranks where gaps
     # reflect the number of tied teams ([0, 0, 2]). Restore that if a
     # future model needs it.
+    #: () -> Array[Integer]
     def rankings
       rank.chunk_while { |a, b| a == b }.flat_map.with_index { |group, i|
         [i] * group.size

@@ -2,27 +2,42 @@
 
 module OpenSkill
   class Model
-    attr_reader :mu, :sigma, :beta, :beta_sq, :two_beta_sq,
-                :epsilon, :z, :alpha, :target, :tau, :limit_sigma
+    attr_reader :mu, :sigma, :beta, :beta_sq, :two_beta_sq, :epsilon, :z, :alpha, :target #: Float
+    attr_reader :tau #: Float?
+    attr_reader :limit_sigma #: bool
 
-    def initialize(mu: 25, z: 3, sigma: mu.to_f / z, beta: sigma / 2.0,
+    # Parameters are taken as written, 25 or 8.33, and kept as Floats.
+    #
+    # @rbs mu: number
+    # @rbs z: number
+    # @rbs sigma: number
+    # @rbs beta: number
+    # @rbs epsilon: number
+    # @rbs alpha: number
+    # @rbs target: number
+    # @rbs tau: number?
+    # @rbs prevent_sigma_increase: bool
+    # @rbs limit_sigma: bool
+    # @rbs return: void
+    def initialize(mu: 25, z: 3, sigma: mu.to_f / z, beta: sigma.to_f / 2,
                    epsilon: 0.0001, alpha: 1, target: 0, tau: nil,
                    prevent_sigma_increase: false, limit_sigma: prevent_sigma_increase)
-      @mu = mu
-      @sigma = sigma
-      @beta = beta
-      @beta_sq = beta**2
+      @mu = mu.to_f
+      @sigma = sigma.to_f
+      @beta = beta.to_f
+      @beta_sq = @beta**2
       @two_beta_sq = 2 * @beta_sq
-      @epsilon = epsilon
-      @z = z
-      @alpha = alpha
-      @target = target
-      @tau = tau
+      @epsilon = epsilon.to_f
+      @z = z.to_f
+      @alpha = alpha.to_f
+      @target = target.to_f
+      @tau = tau&.to_f
       @limit_sigma = limit_sigma
 
       @rating_model = PlackettLuce.new(self)
     end
 
+    #: () -> Rating
     def rating
       Rating.new(mu, sigma)
     end
@@ -34,8 +49,10 @@ module OpenSkill
     #   model.rate(Game.new([[first]], [[tied_a], [tied_b]], [[last]]))
     #
     # Returns a flat array of updated teams in the same (flattened) order.
+    #: (Game game) -> Array[Array[Rating]]
     def rate(game)
       processed_game = game
+      tau = self.tau
 
       # If tau is provided, use additive dynamics factor to keep ratings pliable
       if tau
@@ -62,6 +79,7 @@ module OpenSkill
       new_ratings
     end
 
+    #: (Rating rating) -> Float
     def ordinal(rating)
       target + alpha * (rating.mu - z * rating.sigma)
     end

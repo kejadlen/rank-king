@@ -1,0 +1,36 @@
+# Roda ships no signatures. This is the routing surface web.rb uses and
+# no more of it.
+#
+# Matchers stay untyped on purpose. Roda's matcher vocabulary is open,
+# and the block arguments a match yields depend on which matcher matched.
+class Roda
+  def self.plugin: (Symbol plugin, *untyped args, **untyped options) -> void
+
+  # The block is the router, run against a fresh instance per request.
+  def self.route: () { (RodaRequest) [self: instance] -> untyped } -> void
+
+  def self.freeze: () -> singleton(Roda)
+
+  def self.app: () -> untyped
+
+  # The route_csrf plugin's: halts a request whose token does not check
+  # out, and hands out the token a form has to post back.
+  def check_csrf!: () -> void
+  def csrf_token: (?String? path, ?String? method) -> String
+
+  class RodaRequest
+    def is: (*untyped matchers) { (*untyped) -> untyped } -> void
+    def on: (*untyped matchers) { (*untyped) -> untyped } -> void
+    def root: () { () -> untyped } -> void
+    def get: (*untyped matchers) ?{ (*untyped) -> untyped } -> void
+    def post: (*untyped matchers) ?{ (*untyped) -> untyped } -> void
+
+    # Values stay untyped: repeated keys arrive as arrays.
+    def params: () -> Hash[String, untyped]
+
+    def redirect: (String path, ?Integer status) -> bot
+
+    # The halt plugin's: ends the request with this status.
+    def halt: (?Integer status) -> bot
+  end
+end

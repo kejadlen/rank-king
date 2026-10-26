@@ -4,11 +4,13 @@
 
 module OpenSkill
   class PlackettLuce
+    #: (Model model) -> void
     def initialize(model)
       @beta_sq = model.beta_sq
       @epsilon = model.epsilon
     end
 
+    #: (Game game) -> Array[Array[Rating]]
     def rate(game)
       return game.teams if game.teams.length <= 1
 

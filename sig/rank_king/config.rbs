@@ -1,0 +1,11 @@
+# Config is a Data class, whose members the inline parser cannot read.
+# It is marked `@rbs skip` in config.rb and its members are signed here;
+# the methods reopened onto it carry their own inline types.
+module RankKing
+  class Config
+    attr_reader database_url: String
+    attr_reader session_secret: String
+
+    def self.new: (database_url: String, session_secret: String) -> instance
+  end
+end

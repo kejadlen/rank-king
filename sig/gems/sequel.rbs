@@ -1,0 +1,53 @@
+# Sequel ships no signatures, so this describes the parts rank-king
+# calls: one SQLite database, the datasets over it, and the model
+# plumbing the four models are built from. Anything called that is
+# missing here is a type error rather than a silent `untyped`.
+module Sequel
+  type row = Hash[Symbol, untyped]
+
+  def self.sqlite: (String path, **untyped options) -> Database
+
+  # Loads an extension into Sequel itself; `:migration` is the one this
+  # app asks for, and it is what defines Migrator.
+  def self.extension: (*Symbol names) -> void
+
+  # The superclass of a model over a table, as `Sequel::Model(DB[:t])`.
+  def self.Model: (Dataset[row] source) -> singleton(Model)
+
+  class Database
+    def []: (Symbol table) -> Dataset[row]
+
+    def transaction: [T] () { () -> T } -> T
+  end
+
+  # Generic over what a row comes back as: a hash from a plain dataset,
+  # a model instance from a model's association dataset.
+  class Dataset[out T]
+    def where: (*untyped conditions) -> Dataset[T]
+
+    def first: () -> T?
+  end
+
+  class Model
+    def self.plugin: (Symbol name, **untyped options) -> void
+
+    def self.one_to_many: (Symbol name, **untyped options) -> void
+
+    def self.many_to_one: (Symbol name, **untyped options) -> void
+
+    def self.create: (**untyped values) -> instance
+
+    def self.all: () -> Array[instance]
+
+    # The row with this primary key, or nil.
+    def self.[]: (untyped id) -> instance?
+
+    def id: () -> Integer
+  end
+
+  # Applies the migrations in a directory that the database has not run
+  # yet, and does nothing to one that is already current.
+  class Migrator
+    def self.run: (Database database, String directory, **untyped options) -> untyped
+  end
+end

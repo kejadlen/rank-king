@@ -3,16 +3,19 @@
 require "securerandom"
 
 module RankKing
+  # @rbs skip
   Config = Data.define(
     :database_url,
     :session_secret,
   )
 
   class Config
+    #: () -> String
     def to_s
       "Config(database=#{database_url})"
     end
 
+    #: (?Hash[String, String] env) -> Config
     def self.from_env(env = ENV)
       new(
         database_url: env.fetch("DATABASE_URL", ":memory:"),
