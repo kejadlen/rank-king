@@ -18,6 +18,7 @@ class TestWeb < Minitest::Test
     RankKing::DB[:items].delete
     RankKing::DB[:sources].delete
     RankKing::DB[:lists].delete
+    RankKing::DB[:users].delete
   end
 
   def test_root_shows_empty_state
@@ -159,7 +160,45 @@ class TestWeb < Minitest::Test
     assert_equal 422, last_response.status
   end
 
+  def test_lists_belong_to_the_current_user
+    create_list(name: "Foods", items: "Pizza\nSushi")
+
+    assert_equal "local", RankKing::List.first.user.login
+  end
+
+  def test_tailscale_auth_requires_header
+    with_auth("tailscale") do
+      get "/"
+      assert_equal 401, last_response.status
+    end
+  end
+
+  def test_tailscale_auth_scopes_home_to_the_user
+    with_auth("tailscale") do
+      header "Tailscale-User-Login", "alice@example.com"
+      header "Tailscale-User-Name", "Alice"
+      create_list(name: "Alice's", items: "A\nB")
+      assert_equal 1, RankKing::List.count
+
+      header "Tailscale-User-Login", "bob@example.com"
+      header "Tailscale-User-Name", "Bob"
+      get "/"
+      refute_includes last_response.body, "Alice&#39;s"
+      refute_includes last_response.body, "Alice's"
+
+      assert_equal "Alice", RankKing::User.first(login: "alice@example.com").name
+    end
+  end
+
   private
+
+  def with_auth(auth)
+    previous = RankKing::Web.opts[:auth]
+    RankKing::Web.opts[:auth] = auth
+    yield
+  ensure
+    RankKing::Web.opts[:auth] = previous
+  end
 
   def csrf_post(path, params = {})
     get "/"

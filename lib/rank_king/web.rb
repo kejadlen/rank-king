@@ -14,11 +14,16 @@ module RankKing
     plugin :sessions, secret: CONFIG.session_secret
     plugin :route_csrf, csrf_failure: :empty_403, check_request_methods: %w[POST]
 
+    opts[:auth] = CONFIG.auth
+    opts[:local_user] = CONFIG.local_user
+
     route do |r|
       check_csrf!
+      @user = current_user
+      r.halt 401 unless @user
 
       r.root do
-        lists = List.all
+        lists = List.where(user_id: [@user.id, nil]).order(:id).all
         Views::Home.new(lists: lists, csrf: method(:csrf_token)).call
       end
 
@@ -35,7 +40,7 @@ module RankKing
             axis_names = axes_text.lines.map(&:strip).reject(&:empty?)
 
             list = DB.transaction do
-              l = List.create(name: name)
+              l = List.create(name: name, user_id: @user.id)
               source = Source.create(list_id: l.id, kind: Sources::Text.kind)
               Sync.call(source, entries)
               axis_names.each { |n| Axis.create(list_id: l.id, name: n) }
@@ -87,6 +92,21 @@ module RankKing
             end
           end
         end
+      end
+    end
+
+    private
+
+    # With AUTH=tailscale, identity comes from the headers `tailscale serve`
+    # sets, which is only safe when the app is reachable through Tailscale
+    # alone. Otherwise everyone is one local user.
+    def current_user
+      case opts[:auth]
+      when "tailscale"
+        login = env["HTTP_TAILSCALE_USER_LOGIN"].to_s
+        User.for_login(login, name: env["HTTP_TAILSCALE_USER_NAME"]) unless login.empty?
+      else
+        User.for_login(opts[:local_user])
       end
     end
   end

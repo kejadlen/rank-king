@@ -15,6 +15,7 @@ class TestSync < Minitest::Test
     DB[:items].delete
     DB[:sources].delete
     DB[:lists].delete
+    DB[:users].delete
 
     @list = List.create(name: "Videos")
     @source = Source.create(list_id: @list.id, kind: "text")
