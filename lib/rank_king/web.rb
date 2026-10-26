@@ -3,6 +3,7 @@
 require "roda"
 
 require_relative "models"
+require_relative "proxy_auth"
 require_relative "sync"
 require_relative "views/home"
 require_relative "views/list/show"
@@ -14,13 +15,15 @@ module RankKing
     plugin :sessions, secret: CONFIG.session_secret
     plugin :route_csrf, csrf_failure: :empty_403, check_request_methods: %w[POST]
 
-    opts[:auth] = CONFIG.auth
-    opts[:local_user] = CONFIG.local_user
+    plugin :error_handler, classes: [ProxyAuth::MissingLogin] do |e|
+      response.status = 401
+      response["Content-Type"] = "text/plain"
+      "Unauthorized: #{e.message}.\n"
+    end
 
     route do |r|
       check_csrf!
-      @user = current_user
-      r.halt 401 unless @user
+      @user = User.for_login(ProxyAuth.login(r.env))
 
       r.root do
         lists = List.where(user_id: [@user.id, nil]).order(:id).all
@@ -52,7 +55,9 @@ module RankKing
         end
 
         r.on Integer do |list_id|
-          @list = List[list_id]
+          # Lists are private to their owner; ones from before users
+          # existed have none and stay visible to everyone.
+          @list = List.where(id: list_id, user_id: [@user.id, nil]).first
           r.halt 404 unless @list
 
           r.is do
@@ -92,21 +97,6 @@ module RankKing
             end
           end
         end
-      end
-    end
-
-    private
-
-    # With AUTH=tailscale, identity comes from the headers `tailscale serve`
-    # sets, which is only safe when the app is reachable through Tailscale
-    # alone. Otherwise everyone is one local user.
-    def current_user
-      case opts[:auth]
-      when "tailscale"
-        login = env["HTTP_TAILSCALE_USER_LOGIN"].to_s
-        User.for_login(login, name: env["HTTP_TAILSCALE_USER_NAME"]) unless login.empty?
-      else
-        User.for_login(opts[:local_user])
       end
     end
   end

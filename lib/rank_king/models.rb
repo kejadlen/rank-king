@@ -9,11 +9,7 @@ module RankKing
   class User < Sequel::Model(DB[:users])
     one_to_many :lists, class: "RankKing::List"
 
-    def self.for_login(login, name: nil)
-      user = find_or_create(login:) {|user| user.name = name }
-      user.update(name:) if name && user.name != name
-      user
-    end
+    def self.for_login(login) = find_or_create(login:)
   end
 
   class List < Sequel::Model(DB[:lists])
