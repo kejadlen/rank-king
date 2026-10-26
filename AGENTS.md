@@ -14,7 +14,8 @@ Rank King is a webapp for ranking items along multiple axes through pairwise com
 ## Repository layout
 
 ```
-config.ru          — Rack entrypoint
+config.ru          — Rack entrypoint (expects the proxy's Remote-User header)
+demo.ru            — config.ru plus StubLogin, for dev and the Fly apps
 Gemfile            — dependencies
 Rakefile           — rake tasks (test, dev)
 db/migrate/        — Sequel migrations
@@ -35,7 +36,7 @@ public/            — static assets
 
 ## Domain model
 
-- **User** has many Lists; identified by login (see `AUTH`)
+- **User** has many Lists; identified by the login on the `Remote-User` header
 - **List** belongs to a User and has many Items, Sources, and Axes
 - **Source** belongs to a List and produces its Items; `kind` picks a class from `Sources::ALL`
 - **Item** belongs to a List and a Source; items missing from the latest sync are archived (`archived_at`) and hidden everywhere
@@ -48,14 +49,12 @@ public/            — static assets
 |------|---------|
 | Run tests | `bundle exec rake test` |
 | Run dev server | `bundle exec rake dev` (uses `fd \| entr -r rackup`) |
-| Start server | `bundle exec rackup` |
+| Start server | `bundle exec rackup` (behind the proxy) or `bundle exec rackup demo.ru` (stub login) |
 
 ## Environment variables
 
 - `DATABASE_URL` — SQLite path (default: `:memory:`)
 - `SESSION_SECRET` — session signing key (auto-generated if unset)
-- `AUTH` — `local` (default: everyone is `LOCAL_USER`) or `tailscale` (user from the `Tailscale-User-Login` header; only safe behind `tailscale serve`)
-- `LOCAL_USER` — login of the single user in `local` auth (default: `local`)
 
 Tests set `DATABASE_URL=:memory:` in `test/test_helper.rb`.
 
@@ -66,4 +65,6 @@ Tests set `DATABASE_URL=:memory:` in `test/test_helper.rb`.
 - Models use `Sequel::Model` with `timestamps` plugin
 - Views are Phlex components under `lib/rank_king/views/`
 - CSRF protection is on for all POST routes
+- Every request needs a `Remote-User` header or it gets a 401. That is safe only because a proxy (Tailscale identity) writes the header. `StubLogin` fills it in for `demo.ru` (dev server, Fly apps) and nowhere else: never in `config.ru`, and never in front of real data.
+- Lists are private to their owner (404 for anyone else); lists from before users existed have no owner and are visible to everyone
 - Config is a frozen `Data.define` value object

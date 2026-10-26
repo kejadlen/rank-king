@@ -12,7 +12,10 @@ class TestWeb < Minitest::Test
 
   def app = RankKing::Web.app
 
+  LOGIN = "alpha@example.com"
+
   def setup
+    header "Remote-User", LOGIN
     RankKing::DB[:results].delete
     RankKing::DB[:axes].delete
     RankKing::DB[:items].delete
@@ -163,41 +166,36 @@ class TestWeb < Minitest::Test
   def test_lists_belong_to_the_current_user
     create_list(name: "Foods", items: "Pizza\nSushi")
 
-    assert_equal "local", RankKing::List.first.user.login
+    assert_equal LOGIN, RankKing::List.first.user.login
   end
 
-  def test_tailscale_auth_requires_header
-    with_auth("tailscale") do
-      get "/"
-      assert_equal 401, last_response.status
-    end
+  def test_requires_login
+    header "Remote-User", nil
+    get "/"
+    assert_equal 401, last_response.status
   end
 
-  def test_tailscale_auth_scopes_home_to_the_user
-    with_auth("tailscale") do
-      header "Tailscale-User-Login", "alice@example.com"
-      header "Tailscale-User-Name", "Alice"
-      create_list(name: "Alice's", items: "A\nB")
-      assert_equal 1, RankKing::List.count
+  def test_lists_are_private
+    as("alice@example.com") { create_list(name: "Alpaca", items: "A\nB") }
+    assert_equal 1, RankKing::List.count
+    list = RankKing::List.first
 
-      header "Tailscale-User-Login", "bob@example.com"
-      header "Tailscale-User-Name", "Bob"
+    as("bob@example.com") do
       get "/"
-      refute_includes last_response.body, "Alice&#39;s"
-      refute_includes last_response.body, "Alice's"
+      refute_includes last_response.body, "Alpaca"
 
-      assert_equal "Alice", RankKing::User.first(login: "alice@example.com").name
+      get "/lists/#{list.id}"
+      assert_equal 404, last_response.status
     end
   end
 
   private
 
-  def with_auth(auth)
-    previous = RankKing::Web.opts[:auth]
-    RankKing::Web.opts[:auth] = auth
+  def as(login)
+    header "Remote-User", login
     yield
   ensure
-    RankKing::Web.opts[:auth] = previous
+    header "Remote-User", LOGIN
   end
 
   def csrf_post(path, params = {})
