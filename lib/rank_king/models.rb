@@ -6,7 +6,18 @@ require_relative "sources"
 Sequel::Model.plugin :timestamps, update_on_create: true
 
 module RankKing
+  class User < Sequel::Model(DB[:users])
+    one_to_many :lists, class: "RankKing::List"
+
+    def self.for_login(login, name: nil)
+      user = find_or_create(login:) {|user| user.name = name }
+      user.update(name:) if name && user.name != name
+      user
+    end
+  end
+
   class List < Sequel::Model(DB[:lists])
+    many_to_one :user, class: "RankKing::User"
     # Archived items are hidden everywhere for now.
     one_to_many :items, class: "RankKing::Item", conditions: { archived_at: nil }
     one_to_many :axes, class: "RankKing::Axis"

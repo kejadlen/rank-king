@@ -35,7 +35,8 @@ public/            — static assets
 
 ## Domain model
 
-- **List** has many Items, Sources, and Axes
+- **User** has many Lists; identified by login (see `AUTH`)
+- **List** belongs to a User and has many Items, Sources, and Axes
 - **Source** belongs to a List and produces its Items; `kind` picks a class from `Sources::ALL`
 - **Item** belongs to a List and a Source; items missing from the latest sync are archived (`archived_at`) and hidden everywhere
 - **Axis** belongs to a List, has many Results
@@ -53,6 +54,8 @@ public/            — static assets
 
 - `DATABASE_URL` — SQLite path (default: `:memory:`)
 - `SESSION_SECRET` — session signing key (auto-generated if unset)
+- `AUTH` — `local` (default: everyone is `LOCAL_USER`) or `tailscale` (user from the `Tailscale-User-Login` header; only safe behind `tailscale serve`)
+- `LOCAL_USER` — login of the single user in `local` auth (default: `local`)
 
 Tests set `DATABASE_URL=:memory:` in `test/test_helper.rb`.
 
