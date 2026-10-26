@@ -3,6 +3,7 @@
 require "roda"
 
 require_relative "models"
+require_relative "sync"
 require_relative "views/home"
 require_relative "views/list/show"
 
@@ -27,18 +28,16 @@ module RankKing
             name = r.params["name"].to_s.strip
             r.halt 422 if name.empty?
 
-            items_text = r.params["items"].to_s.strip
-            r.halt 422 if items_text.empty?
-
-            item_names = items_text.lines.map(&:strip).reject(&:empty?)
-            r.halt 422 if item_names.size < 2
+            entries = Sources::Text.new.entries(r.params["items"])
+            r.halt 422 if entries.size < 2
 
             axes_text = r.params["axes"].to_s.strip
             axis_names = axes_text.lines.map(&:strip).reject(&:empty?)
 
             list = DB.transaction do
               l = List.create(name: name)
-              item_names.each { |n| Item.create(list_id: l.id, name: n) }
+              source = Source.create(list_id: l.id, kind: Sources::Text.kind)
+              Sync.call(source, entries)
               axis_names.each { |n| Axis.create(list_id: l.id, name: n) }
               l
             end
@@ -54,6 +53,17 @@ module RankKing
           r.is do
             r.get do
               Views::ListViews::Show.new(list: @list, csrf: method(:csrf_token)).call
+            end
+          end
+
+          r.on "sources", Integer, "sync" do |source_id|
+            r.post do
+              source = @list.sources_dataset.where(id: source_id).first
+              r.halt 404 unless source
+
+              Sync.call(source, source.plugin.entries(r.params["snapshot"]))
+
+              r.redirect "/lists/#{@list.id}"
             end
           end
 

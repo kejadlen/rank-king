@@ -16,6 +16,7 @@ class TestWeb < Minitest::Test
     RankKing::DB[:results].delete
     RankKing::DB[:axes].delete
     RankKing::DB[:items].delete
+    RankKing::DB[:sources].delete
     RankKing::DB[:lists].delete
   end
 
@@ -121,13 +122,50 @@ class TestWeb < Minitest::Test
     assert_equal 403, last_response.status
   end
 
+  def test_create_list_adds_a_text_source
+    create_list(name: "Foods", items: "Pizza\nSushi")
+    list = RankKing::List.first
+
+    assert_equal ["text"], list.sources.map(&:kind)
+    assert_equal %w[Pizza Sushi], list.sources.first.items.map(&:external_id)
+  end
+
+  def test_sync_adds_and_hides_items
+    create_list(name: "Foods", items: "Pizza\nSushi", axes: "Taste")
+    list = RankKing::List.first
+    source = list.sources.first
+
+    csrf_post "/lists/#{list.id}/sources/#{source.id}/sync", { snapshot: "Pizza\nTacos" }
+    assert last_response.redirect?
+
+    assert_equal %w[Pizza Tacos], list.items_dataset.order(:id).map(:name)
+
+    get "/lists/#{list.id}"
+    assert_includes last_response.body, "Tacos"
+    refute_includes last_response.body, "Sushi"
+  end
+
+  def test_record_result_rejects_archived_item
+    create_list(name: "Foods", items: "Pizza\nSushi\nTacos", axes: "Taste")
+    list = RankKing::List.first
+    sushi = list.items.find { |i| i.name == "Sushi" }
+    RankKing::Sync.call(list.sources.first, RankKing::Sources::Text.new.entries("Pizza\nTacos"))
+
+    csrf_post "/lists/#{list.id}/results", {
+      axis_id: list.axes.first.id,
+      winner_id: sushi.id,
+      loser_id: list.items.first.id,
+    }
+    assert_equal 422, last_response.status
+  end
+
   private
 
   def csrf_post(path, params = {})
     get "/"
     token = last_response.body[/name="_csrf" value="([^"]+)"/, 1]
     # The home page CSRF token is for /lists, we need one for the target path
-    get "/lists/#{path.split("/")[2]}" if path.include?("/results")
+    get "/lists/#{path.split("/")[2]}" if path.match?(%r{\A/lists/\d+/})
     token = last_response.body[/action="#{Regexp.escape(path)}".*?name="_csrf" value="([^"]+)"/m, 1] || token
     post path, params.merge("_csrf" => token)
   end
