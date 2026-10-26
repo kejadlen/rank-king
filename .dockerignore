@@ -1,0 +1,10 @@
+.git
+.jj
+.github
+.claude
+.direnv
+.envrc
+.quire
+.ramekin
+db/*.db
+test
