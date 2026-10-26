@@ -13,11 +13,13 @@ module RankKing
 end
 
 require_relative "sources/text"
+require_relative "sources/youtube_playlist"
 
 module RankKing
   module Sources
     ALL = {
       Text.kind => Text,
+      YouTubePlaylist.kind => YouTubePlaylist,
     }.freeze
 
     def self.fetch(kind) = ALL.fetch(kind)
