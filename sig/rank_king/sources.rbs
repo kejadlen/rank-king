@@ -22,7 +22,8 @@ module RankKing
     interface _SourceClass
       def kind: () -> String
       def push?: () -> bool
-      def new: (Hash[String, untyped] config) -> _Source
+      # The source for a list, configured from the kind's own table.
+      def for: (List list) -> _Source
     end
   end
 end

@@ -21,12 +21,7 @@ module RankKing
     one_to_many :items, class: "RankKing::Item", conditions: { archived_at: nil }
     one_to_many :axes, class: "RankKing::Axis"
 
-    def source_config = JSON.parse(super)
-    def source_config=(value)
-      super(JSON.generate(value))
-    end
-
-    def source = Sources.fetch(source_kind).new(source_config)
+    def source = Sources.fetch(source_kind).for(self)
   end
 
   # @rbs skip

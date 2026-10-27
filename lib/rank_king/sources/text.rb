@@ -4,18 +4,15 @@ module RankKing
   module Sources
     # A push source: the snapshot is pasted text, one item per line.
     class Text
-      # @rbs @config: Hash[String, untyped]
-
       #: () -> String
       def self.kind = "text"
 
       #: () -> bool
       def self.push? = true
 
-      #: (?Hash[String, untyped] config) -> void
-      def initialize(config = {})
-        @config = config
-      end
+      # Text has no configuration, so every list's text source is the same.
+      #: (List list) -> Text
+      def self.for(list) = new
 
       #: (untyped snapshot) -> Array[Entry]
       def entries(snapshot)

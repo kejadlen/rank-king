@@ -17,8 +17,6 @@ module RankKing
     def items_dataset: () -> Sequel::Dataset[Item]
     def axes_dataset: () -> Sequel::Dataset[Axis]
     def source_kind: () -> String
-    def source_config: () -> Hash[String, untyped]
-    def source_config=: (Hash[String, untyped] value) -> void
     def synced_at: () -> Time?
     def source: () -> Sources::_Source
   end
