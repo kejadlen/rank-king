@@ -20,6 +20,14 @@ module RankKing
     one_to_many :axes, class: "RankKing::Axis"
 
     def source = Sources.fetch(source_kind).for(self)
+
+    # Archived items too, which the items association leaves out.
+    def before_destroy
+      Result.where(axis_id: axes_dataset.select(:id)).delete
+      axes_dataset.delete
+      Item.where(list_id: id).delete
+      super
+    end
   end
 
   # @rbs skip
@@ -29,7 +37,27 @@ module RankKing
 
   # @rbs skip
   class Axis < Sequel::Model(DB[:axes])
+    many_to_one :list, class: "RankKing::List"
     one_to_many :results, class: "RankKing::Result"
+
+    # The list's items in order on this axis, then the ones with no
+    # results on it yet. Ordered by win count until OpenSkill is wired in.
+    def ranking
+      wins = Hash.new(0)
+      compared = Set.new
+      results.each do |result|
+        wins[result.winner_id] += 1
+        compared << result.winner_id << result.loser_id
+      end
+
+      ranked, unranked = list.items.partition { |item| compared.include?(item.id) }
+      [ranked.sort_by { |item| [-wins[item.id], item.id] }, unranked]
+    end
+
+    def before_destroy
+      results_dataset.delete
+      super
+    end
   end
 
   # @rbs skip

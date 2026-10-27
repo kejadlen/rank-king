@@ -31,7 +31,10 @@ module RankKing
   class Axis < Sequel::Model
     def name: () -> String
     def list_id: () -> Integer
+    def list: () -> List
     def results: () -> Array[Result]
+    def results_dataset: () -> Sequel::Dataset[Result]
+    def ranking: () -> [Array[Item], Array[Item]]
   end
 
   class Result < Sequel::Model

@@ -6,7 +6,9 @@ module RankKing
   module Views
     module Sources
       # The Text source's sync dialog: every item's name, editable in place,
-      # and a box for new ones.
+      # and a box for new ones. It fills a <dialog> as Gloss lays one out:
+      # header, body, footer, so the form is the body and the footer's
+      # Save reaches it by id.
       class Text < Phlex::HTML
         def initialize(list:, csrf:)
           @list = list
@@ -15,21 +17,23 @@ module RankKing
 
         def view_template
           action = "/lists/#{@list.id}/sync"
-          form(method: "post", action:, class: "form") do
+
+          header { "Edit items" }
+          form(id: "sync-form", method: "post", action:) do
             input(type: "hidden", name: "_csrf", value: @csrf.call(action))
-            h2 { "Edit items" }
-            p(class: "empty") { "Clear a name to remove that item." }
+            p { "Clear a name to remove that item." }
             @list.items_dataset.order(:id).each do |item|
               input(type: "text", name: "items[#{item.id}]", value: item.name, aria_label: "Item name")
             end
-            div(class: "field") do
-              label(for: "new-items") { "Add items, one per line" }
-              textarea(name: "new_items", id: "new-items", rows: 3)
+            label(class: "field") do
+              plain "Add items"
+              textarea(name: "new_items", rows: 3)
+              small { "One per line." }
             end
-            div(class: "dialog-actions") do
-              button(type: "button", class: "btn-link", commandfor: "sync-dialog", command: "close") { "Cancel" }
-              button(type: "submit", class: "btn-primary") { "Save" }
-            end
+          end
+          footer do
+            button(type: "button", commandfor: "sync-dialog", command: "close") { "Cancel" }
+            button(type: "submit", form: "sync-form", data_variant: "primary") { "Save" }
           end
         end
       end

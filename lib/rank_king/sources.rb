@@ -15,6 +15,10 @@ require_relative "sources/text"
 
 module RankKing
   module Sources
+    # Every kind a list can be made from, in the order the new-list form
+    # offers them. A list keeps its kind for good.
+    KINDS = %w[Text].freeze #: Array[String]
+
     # A list's source_kind names a class in this module.
     #: (String kind) -> _SourceClass
     def self.fetch(kind) = const_get(kind, false)

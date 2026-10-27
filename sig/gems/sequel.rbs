@@ -35,6 +35,12 @@ module Sequel
     def all: () -> Array[T]
 
     def first: () -> T?
+
+    def select: (*Symbol columns) -> Dataset[row]
+
+    def each: () { (T) -> void } -> void
+
+    def delete: () -> Integer
   end
 
   class Model
@@ -61,6 +67,11 @@ module Sequel
 
     # Sets the columns given and saves the row.
     def update: (**untyped values) -> self
+
+    def destroy: () -> self
+
+    # A hook Sequel runs inside destroy, before the row is deleted.
+    def before_destroy: () -> void
   end
 
   # Applies the migrations in a directory that the database has not run

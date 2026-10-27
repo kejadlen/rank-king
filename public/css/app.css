@@ -1,209 +1,155 @@
-/* -------------------- */
-/* Global styles */
-/* -------------------- */
+/* Rank King's own layer over Gloss (public/vendor/gloss). Every value
+   reads a --gl-* token; nothing here restyles a Gloss component, it only
+   lays the components out. */
 
-body {
-  font-family: system-ui, -apple-system, sans-serif;
-  font-size: var(--step--1);
-  color: var(--color-text, #1a1a1a);
-  background: var(--color-surface, #fff);
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-}
-
-a {
-  color: inherit;
-}
-
-h1 { font-size: var(--step-2); font-weight: 600; }
-h2 { font-size: var(--step-0); font-weight: 600; }
-h3 { font-size: var(--step--1); font-weight: 600; }
-
-/* -------------------- */
-/* Site header */
-/* -------------------- */
-
-.site-header {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-s);
-  padding: var(--space-xs) var(--space-l);
-  border-block-end: 1px solid var(--color-border, #e0e0e0);
-}
-
-.site-name {
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  text-decoration: none;
+:root {
+  /* Lucide "ellipsis", drawn the way Gloss draws its own icon tokens.
+     Gloss has no "more" icon yet; this belongs upstream when it does. */
+  --rk-icon-more: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='1'/%3E%3Ccircle cx='19' cy='12' r='1'/%3E%3Ccircle cx='5' cy='12' r='1'/%3E%3C/svg%3E");
 }
 
 /* -------------------- */
-/* Layout */
+/* Page */
 /* -------------------- */
 
 main {
-  flex: 1;
-  max-width: 40rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gl-space-m);
+  max-width: 34rem;
   margin-inline: auto;
-  padding: var(--space-m) var(--space-l);
-  width: 100%;
+  padding: var(--gl-space-m) var(--gl-space-s);
 }
 
-/* -------------------- */
-/* Sections */
-/* -------------------- */
+main form { max-width: none; }
 
-.section + .section {
-  margin-block-start: var(--space-l);
-}
+main p { margin: 0; }
 
-.empty {
-  color: var(--color-text-secondary, #666);
-  font-size: var(--step--1);
-}
-
-/* -------------------- */
-/* Forms */
-/* -------------------- */
-
-.form {
-  display: grid;
-  gap: var(--space-s);
-}
-
-.field {
-  display: grid;
-  gap: var(--space-3xs);
-}
-
-label {
-  font-size: var(--step--1);
-  font-weight: 600;
-}
-
-input,
-textarea,
-select {
-  padding: var(--space-3xs) var(--space-2xs);
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font: inherit;
-  background: #fff;
-}
-
-input:focus,
-textarea:focus,
-select:focus {
-  outline: 2px solid transparent;
-  border-color: var(--color-text-secondary, #666);
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15);
-}
-
-textarea {
-  resize: vertical;
-}
-
-.btn-primary {
-  padding: var(--space-3xs) var(--space-s);
-  border: 1px solid #1a1a1a;
-  border-radius: 4px;
-  background: #1a1a1a;
-  color: #fff;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.btn-primary:hover {
-  background: #333;
-}
-
-.btn-link {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: #666;
-  font: inherit;
-  font-size: 0.875em;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.section-header {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-s);
-}
-
-.dialog {
-  width: min(32rem, 100% - 2 * var(--space-s));
-  padding: var(--space-m);
-  border: 1px solid #ccc;
-  border-radius: 8px;
-}
-
-.dialog::backdrop {
-  background: rgba(0, 0, 0, 0.3);
-}
-
-.dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: baseline;
-  gap: var(--space-s);
-}
-
-/* -------------------- */
-/* Matchup */
-/* -------------------- */
-
-.matchup {
+/* One row: back, title, then whatever the screen puts at the end. */
+main > header {
   display: flex;
   align-items: center;
-  gap: var(--space-s);
+  gap: var(--gl-space-2xs);
 }
 
-.matchup-axis {
-  font-size: var(--step--1);
-  color: var(--color-text-secondary, #666);
-  margin-block-end: var(--space-xs);
+main > header h1 { flex: 1; min-width: 0; }
+
+section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gl-space-2xs);
 }
 
-.matchup-vs {
-  font-size: var(--step--1);
-  color: var(--color-text-secondary, #666);
-  font-weight: 600;
+/* Actions at the foot of a form: one on the right, or two pushed apart. */
+form footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--gl-space-2xs);
 }
 
-.btn-choice {
-  padding: var(--space-xs) var(--space-m);
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background: #fff;
+form footer:has(> :nth-child(2)) { justify-content: space-between; }
+
+/* -------------------- */
+/* Fields */
+/* -------------------- */
+
+/* Gloss styles <input> and <select> but not <textarea>; this matches them. */
+textarea {
+  width: 100%;
+  padding: var(--gl-space-xs) calc(var(--gl-space-xs) - 1px);
+  background: var(--gl-color-surface-card);
+  border: 1px solid var(--gl-color-border-default);
+  border-radius: var(--gl-radius-sm);
+  color: var(--gl-color-text-primary);
+  font: 400 var(--gl-step--1)/1.5 var(--gl-font-sans);
+  text-transform: none;
+  letter-spacing: normal;
+  resize: vertical;
+  outline: none;
+}
+
+/* A value shown in a field's place when it can't be changed. */
+.field > p {
+  font: 400 var(--gl-step--1)/1.5 var(--gl-font-sans);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--gl-color-text-primary);
+}
+
+[data-tags] > small {
+  font-size: var(--gl-step--2);
+  color: var(--gl-color-text-tertiary);
+}
+
+/* The "+ Axis" slot is a dashed tag holding a bare input. */
+.tag[data-dashed] input:not([type="checkbox"]):not([type="radio"]) {
+  width: 8ch;
+  padding: 0;
+  border: none;
+  background: transparent;
   font: inherit;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.1s;
-}
-
-.btn-choice:hover {
-  border-color: #1a1a1a;
-  background: #f5f5f5;
 }
 
 /* -------------------- */
-/* Ratings */
+/* List actions menu */
 /* -------------------- */
 
-.axis-ratings {
-  margin-block-end: var(--space-s);
+main > header [popovertarget] { anchor-name: --rk-list-actions; }
+
+[popover] {
+  position-anchor: --rk-list-actions;
+  position-area: bottom span-left;
+  min-width: 12rem;
+  margin: var(--gl-space-3xs) 0 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  overflow: visible;
 }
 
-.rating-list {
-  padding-inline-start: var(--space-m);
+[popover] > .card { box-shadow: var(--gl-shadow-float); }
+
+/* -------------------- */
+/* Ranking */
+/* -------------------- */
+
+[role="tabpanel"]:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gl-space-s);
 }
 
-.rating-list li {
-  padding-block: var(--space-3xs);
+/* The rank sits in a fixed gutter; "Unranked" sits at the far end. */
+.card > li:has(> .type-label:first-child) { align-items: baseline; }
+
+.card > li > .type-label:first-child {
+  min-width: 2.5ch;
+  color: var(--gl-color-text-tertiary);
 }
+
+.card > li > .type-label:last-child:not(:first-child) {
+  margin-inline-start: auto;
+  color: var(--gl-color-text-tertiary);
+}
+
+/* -------------------- */
+/* Compare */
+/* -------------------- */
+
+[data-matchup] {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gl-space-xs);
+}
+
+[data-matchup] button {
+  width: 100%;
+  min-height: 8rem;
+  padding: var(--gl-space-s);
+  background: var(--gl-color-surface-card);
+  border-radius: var(--gl-radius-lg);
+  font: 600 var(--gl-step-1)/1.25 var(--gl-font-sans);
+  white-space: normal;
+}
+
+[data-matchup] + .btn { align-self: center; }

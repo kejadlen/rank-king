@@ -11,6 +11,9 @@ module RankKing
       #: (List list) -> Text
       def self.for(list) = new(list)
 
+      #: () -> String
+      def self.title = "Typed list"
+
       #: (List list) -> void
       def initialize(list)
         @list = list
