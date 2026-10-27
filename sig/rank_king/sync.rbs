@@ -1,0 +1,12 @@
+# Summary is a Data class, whose members the inline parser cannot read.
+module RankKing
+  module Sync
+    class Summary
+      attr_reader added: Integer
+      attr_reader restored: Integer
+      attr_reader archived: Integer
+
+      def self.new: (added: Integer, restored: Integer, archived: Integer) -> instance
+    end
+  end
+end

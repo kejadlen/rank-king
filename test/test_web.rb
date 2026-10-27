@@ -125,6 +125,67 @@ class TestWeb < Minitest::Test
     assert_equal 403, last_response.status
   end
 
+  def test_create_list_adds_a_text_source
+    create_list(name: "Foods", items: "Pizza\nSushi")
+    list = RankKing::List.first
+
+    assert_equal "Text", list.source_kind
+    assert_equal %w[Pizza Sushi], list.items.map(&:name)
+  end
+
+  def test_text_sync_dialog_lists_items_for_editing
+    create_list(name: "Foods", items: "Pizza\nSushi")
+    list = RankKing::List.first
+    pizza = list.items.find { |i| i.name == "Pizza" }
+
+    get "/lists/#{list.id}"
+    assert_includes last_response.body, "Edit items"
+    assert_includes last_response.body, %(action="/lists/#{list.id}/sync")
+    assert_includes last_response.body, %(name="items[#{pizza.id}]" value="Pizza")
+  end
+
+  def test_text_sync_renames_archives_and_adds_by_id
+    create_list(name: "Foods", items: "Pizza\nSushi\nTacos", axes: "Taste")
+    list = RankKing::List.first
+    pizza, sushi, tacos = list.items_dataset.order(:id).all
+
+    csrf_post "/lists/#{list.id}/sync", {
+      "items" => { pizza.id.to_s => "Pizza Margherita", sushi.id.to_s => "  ", tacos.id.to_s => "Tacos" },
+      "new_items" => "Ramen\n\nCurry\n",
+    }
+    assert last_response.redirect?
+
+    assert_equal "Pizza Margherita", pizza.reload.name
+    refute_nil sushi.reload.archived_at
+    assert_nil tacos.reload.archived_at
+    assert_equal ["Pizza Margherita", "Tacos", "Ramen", "Curry"], list.items_dataset.order(:id).map(:name)
+
+    get "/lists/#{list.id}"
+    refute_includes last_response.body, "Sushi"
+  end
+
+  def test_text_sync_leaves_items_it_was_not_sent
+    create_list(name: "Foods", items: "Pizza\nSushi")
+    list = RankKing::List.first
+
+    csrf_post "/lists/#{list.id}/sync", { "new_items" => "Tacos" }
+    assert_equal %w[Pizza Sushi Tacos], list.items_dataset.order(:id).map(:name)
+  end
+
+  def test_record_result_rejects_archived_item
+    create_list(name: "Foods", items: "Pizza\nSushi\nTacos", axes: "Taste")
+    list = RankKing::List.first
+    sushi = list.items.find { |i| i.name == "Sushi" }
+    sushi.update(archived_at: Time.now)
+
+    csrf_post "/lists/#{list.id}/results", {
+      axis_id: list.axes.first.id,
+      winner_id: sushi.id,
+      loser_id: list.items.first.id,
+    }
+    assert_equal 422, last_response.status
+  end
+
   def test_lists_belong_to_the_current_user
     create_list(name: "Foods", items: "Pizza\nSushi")
 
@@ -164,7 +225,7 @@ class TestWeb < Minitest::Test
     get "/"
     token = last_response.body[/name="_csrf" value="([^"]+)"/, 1]
     # The home page CSRF token is for /lists, we need one for the target path
-    get "/lists/#{path.split("/")[2]}" if path.include?("/results")
+    get "/lists/#{path.split("/")[2]}" if path.match?(%r{\A/lists/\d+/})
     token = last_response.body[/action="#{Regexp.escape(path)}".*?name="_csrf" value="([^"]+)"/m, 1] || token
     post path, params.merge("_csrf" => token)
   end

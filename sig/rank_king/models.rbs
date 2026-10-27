@@ -16,12 +16,16 @@ module RankKing
     def axes: () -> Array[Axis]
     def items_dataset: () -> Sequel::Dataset[Item]
     def axes_dataset: () -> Sequel::Dataset[Axis]
+    def source_kind: () -> String
+    def synced_at: () -> Time?
+    def source: () -> Sources::_Source
   end
 
   class Item < Sequel::Model
     def name: () -> String
     def list_id: () -> Integer
     def list: () -> List
+    def archived_at: () -> Time?
   end
 
   class Axis < Sequel::Model

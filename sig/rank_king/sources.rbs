@@ -1,0 +1,47 @@
+# Entry is a Data class, whose members the inline parser cannot read, and
+# the interfaces every source kind meets are named here so Sources.fetch
+# and List#source can be typed by them.
+module RankKing
+  module Sources
+    class Entry
+      attr_reader key: String
+      attr_reader name: String
+
+      def self.new: (key: String, name: String) -> instance
+    end
+
+    # A list's source.
+    interface _Source
+      # The text of the button that opens the sync dialog.
+      def label: () -> String
+
+      # What the sync dialog holds: a form that posts to the list's sync.
+      def form: (csrf: Method) -> _Component
+
+      # Applies what that form posted.
+      def sync: (Hash[String, untyped] params) -> void
+    end
+
+    # A source that fetches its items, as Sync.call needs it.
+    interface _Synced
+      # Every item of the list, archived ones included, by the key its
+      # entries carry.
+      def items_by_key: () -> Hash[String, Item]
+
+      # Called by sync for each entry once its item is saved, to keep
+      # whatever the kind knows about the item in its own table.
+      def saved: (Item item, Entry entry) -> void
+    end
+
+    # A source kind: a class in Sources, named by a list's source_kind.
+    interface _SourceClass
+      # The source for a list, configured from the kind's own table.
+      def for: (List list) -> _Source
+    end
+
+    # A view component, as a source's form is.
+    interface _Component
+      def call: () -> String
+    end
+  end
+end

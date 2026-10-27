@@ -29,12 +29,25 @@ module RankKing
 
         def render_items
           section(class: "section") do
-            h2 { "Items" }
+            div(class: "section-header") do
+              h2 { "Items" }
+              render_sync
+            end
             ul(class: "item-list") do
               @list.items.each do |item|
                 li { item.name }
               end
             end
+          end
+        end
+
+        # The source decides what syncing looks like: the button opens a
+        # dialog holding the source's own form.
+        def render_sync
+          source = @list.source
+          button(type: "button", class: "btn-link", commandfor: "sync-dialog", command: "show-modal") { source.label }
+          dialog(id: "sync-dialog", class: "dialog") do
+            render source.form(csrf: @csrf)
           end
         end
 

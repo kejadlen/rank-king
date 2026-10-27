@@ -24,6 +24,9 @@ lib/rank_king/     — app code
   config.rb        — Config data class, reads from ENV
   db.rb            — Sequel connection + migration runner
   models.rb        — Sequel models (User, List, Item, Axis, Result)
+  sources.rb       — Sources.fetch: a list's source_kind names a class in Sources
+  sources/         — one class per source kind
+  sync.rb          — reconciles a list's items with a fresh snapshot from a fetching source
   proxy_auth.rb    — reads the login from Remote-User
   seed.rb          — sample lists for the stub login (demo.ru)
   stub_login.rb    — writes a fixed login where there is no proxy (demo.ru)
@@ -43,8 +46,8 @@ fly.toml           — Fly config for the main demo and PR previews
 ## Domain model
 
 - **User** has many Lists; identified by the login on the `Remote-User` header
-- **List** belongs to a User and has many Items and Axes
-- **Item** belongs to a List
+- **List** belongs to a User and has many Items and Axes, and one source (`source_kind` names a class in `Sources`). Each source renders its own sync dialog on the list page and applies what it posts: `Text`'s edits items by id, and a kind that fetches calls `Sync.call`. A fetching kind keeps its config in its own table keyed by `list_id` and its per-item details in a table keyed by `item_id`
+- **Item** belongs to a List; removed items, and items missing from the latest sync, are archived (`archived_at`) and hidden everywhere
 - **Axis** belongs to a List, has many Results
 - **Result** belongs to an Axis, a winner (Item), and a loser (Item)
 

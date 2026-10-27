@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "db"
+require_relative "sources"
 
 Sequel::Model.plugin :timestamps, update_on_create: true
 
@@ -14,8 +15,11 @@ module RankKing
   # @rbs skip
   class List < Sequel::Model(DB[:lists])
     many_to_one :user, class: "RankKing::User"
-    one_to_many :items, class: "RankKing::Item"
+    # Archived items are hidden everywhere for now.
+    one_to_many :items, class: "RankKing::Item", conditions: { archived_at: nil }
     one_to_many :axes, class: "RankKing::Axis"
+
+    def source = Sources.fetch(source_kind).for(self)
   end
 
   # @rbs skip

@@ -34,17 +34,14 @@ module RankKing
             name = r.params["name"].to_s.strip
             r.halt 422 if name.empty?
 
-            items_text = r.params["items"].to_s.strip
-            r.halt 422 if items_text.empty?
-
-            item_names = items_text.lines.map(&:strip).reject(&:empty?)
+            item_names = r.params["items"].to_s.lines.map(&:strip).reject(&:empty?)
             r.halt 422 if item_names.size < 2
 
             axes_text = r.params["axes"].to_s.strip
             axis_names = axes_text.lines.map(&:strip).reject(&:empty?)
 
             list = DB.transaction do
-              l = List.create(name: name, user_id: user.id)
+              l = List.create(name: name, user_id: user.id, source_kind: "Text")
               item_names.each { |n| Item.create(list_id: l.id, name: n) }
               axis_names.each { |n| Axis.create(list_id: l.id, name: n) }
               l
@@ -62,6 +59,14 @@ module RankKing
           r.is do
             r.get do
               Views::ListViews::Show.new(list: list, csrf: method(:csrf_token)).call
+            end
+          end
+
+          # Submitted from the source's own sync dialog.
+          r.on "sync" do
+            r.post do
+              list.source.sync(r.params)
+              r.redirect "/lists/#{list.id}"
             end
           end
 
