@@ -14,8 +14,10 @@ class TestSync < Minitest::Test
     DB[:axes].delete
     DB[:items].delete
     DB[:lists].delete
+    DB[:users].delete
 
-    @list = List.create(name: "Videos")
+    user = User.create(login: "alpha@example.com")
+    @list = List.create(name: "Videos", user_id: user.id)
   end
 
   def test_adds_new_entries

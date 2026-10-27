@@ -65,9 +65,9 @@ module RankKing
 
           r.on "sync" do
             r.post do
-              Sync.call(@list, @list.source.entries(r.params["snapshot"]))
+              Sync.call(list, list.source.entries(r.params["snapshot"]))
 
-              r.redirect "/lists/#{@list.id}"
+              r.redirect "/lists/#{list.id}"
             end
           end
 
