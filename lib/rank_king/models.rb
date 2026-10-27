@@ -17,23 +17,16 @@ module RankKing
     # Archived items are hidden everywhere for now.
     one_to_many :items, class: "RankKing::Item", conditions: { archived_at: nil }
     one_to_many :axes, class: "RankKing::Axis"
-    one_to_many :sources, class: "RankKing::Source"
+
+    plugin :serialization, :json, :source_config
+
+    def source = Sources.fetch(source_kind).new(source_config)
   end
 
   class Item < Sequel::Model(DB[:items])
     plugin :serialization, :json, :metadata
 
     many_to_one :list, class: "RankKing::List"
-    many_to_one :source, class: "RankKing::Source"
-  end
-
-  class Source < Sequel::Model(DB[:sources])
-    plugin :serialization, :json, :config
-
-    many_to_one :list, class: "RankKing::List"
-    one_to_many :items, class: "RankKing::Item"
-
-    def plugin = Sources.fetch(kind).new(config)
   end
 
   class Axis < Sequel::Model(DB[:axes])

@@ -18,7 +18,7 @@ module RankKing
             div(class: "list-show") do
               h1 { @list.name }
               render_items
-              render_sources
+              render_source
               render_axes
               render_matchup
               render_ratings
@@ -39,30 +39,26 @@ module RankKing
           end
         end
 
-        def render_sources
+        def render_source
+          source = @list.source
+          action = "/lists/#{@list.id}/sync"
+
           section(class: "section") do
-            h2 { "Sources" }
-            @list.sources.each do |source|
-              render_source(source)
-            end
-          end
-        end
+            h2 { "Source" }
+            form(method: "post", action:, class: "form") do
+              input(type: "hidden", name: "_csrf", value: @csrf.call(action))
 
-        def render_source(source)
-          action = "/lists/#{@list.id}/sources/#{source.id}/sync"
-          form(method: "post", action:, class: "form") do
-            input(type: "hidden", name: "_csrf", value: @csrf.call(action))
-
-            if source.plugin.class.push?
-              div(class: "field") do
-                label(for: "snapshot-#{source.id}") { "#{source.kind.capitalize} (one per line)" }
-                textarea(name: "snapshot", id: "snapshot-#{source.id}", rows: 6) do
-                  source.items_dataset.where(archived_at: nil).order(:id).map(:name).join("\n")
+              if source.class.push?
+                div(class: "field") do
+                  label(for: "snapshot") { "Items (one per line)" }
+                  textarea(name: "snapshot", id: "snapshot", rows: 6) do
+                    @list.items_dataset.order(:id).map(:name).join("\n")
+                  end
                 end
               end
-            end
 
-            button(type: "submit", class: "btn-primary") { "Sync" }
+              button(type: "submit", class: "btn-primary") { "Sync" }
+            end
           end
         end
 
