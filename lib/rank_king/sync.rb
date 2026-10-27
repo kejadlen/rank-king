@@ -19,7 +19,7 @@ module RankKing
         added = restored = 0
 
         entries.each do |entry|
-          attrs = { name: entry.name, url: entry.url, archived_at: nil }
+          attrs = { name: entry.name, archived_at: nil }
           if (item = existing.delete(entry.key))
             restored += 1 if item.archived_at
             item.update(**attrs)

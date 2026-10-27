@@ -9,19 +9,20 @@ require_relative "../lib/rank_king/sync"
 class TestSync < Minitest::Test
   include RankKing
 
-  # A synced source that recognizes its items by URL, standing in for a
-  # kind that keeps its keys in its own table.
+  # A synced source that keeps each item's key in memory, standing in for a
+  # kind that keeps its keys in its own table keyed by item_id.
   class FakeSource
     attr_reader :calls
 
-    def initialize(list)
-      @list = list
+    def initialize
+      @keys = {}
       @calls = []
     end
 
-    def items_by_key = RankKing::Item.where(list_id: @list.id).exclude(url: nil).to_hash(:url)
+    def items_by_key = @keys.transform_values {|id| RankKing::Item[id] }
 
     def saved(item, entry)
+      @keys[entry.key] = item.id
       @calls << [item.id, entry.key]
     end
   end
@@ -35,7 +36,7 @@ class TestSync < Minitest::Test
 
     user = User.create(login: "alpha@example.com")
     @list = List.create(name: "Videos", user_id: user.id, source_kind: "Fake")
-    @source = FakeSource.new(@list)
+    @source = FakeSource.new
   end
 
   def test_adds_new_entries
@@ -52,17 +53,17 @@ class TestSync < Minitest::Test
 
     assert_equal 1, summary.archived
     assert_equal %w[a], names
-    refute_nil Item.first(url: "https://example.com/b").archived_at
+    refute_nil Item.first(name: "b").archived_at
   end
 
   def test_restores_entries_that_come_back
     sync("a", "b")
-    b = Item.first(url: "https://example.com/b")
+    b = Item.first(name: "b")
     sync("a")
     summary = sync("a", "b")
 
     assert_equal 1, summary.restored
-    assert_equal b.id, Item.first(url: "https://example.com/b").id
+    assert_equal [b.id], Item.where(name: "b").map(:id)
     assert_equal %w[a b], names
   end
 
@@ -72,14 +73,13 @@ class TestSync < Minitest::Test
     Sync.call(@list, [entry("a", name: "Renamed")], source: @source)
 
     assert_equal "Renamed", item.reload.name
-    assert_equal [[item.id, "https://example.com/a"]] * 2, @source.calls
+    assert_equal [[item.id, "a"]] * 2, @source.calls
   end
 
   private
 
   def entry(key, name: key)
-    url = "https://example.com/#{key}"
-    Sources::Entry.new(key: url, name:, url:)
+    Sources::Entry.new(key:, name:)
   end
 
   def sync(*keys) = Sync.call(@list, keys.map {|key| entry(key) }, source: @source)

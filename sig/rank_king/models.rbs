@@ -25,7 +25,6 @@ module RankKing
     def name: () -> String
     def list_id: () -> Integer
     def list: () -> List
-    def url: () -> String?
     def archived_at: () -> Time?
   end
 
