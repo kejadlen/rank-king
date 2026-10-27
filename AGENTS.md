@@ -30,7 +30,10 @@ test/              — Minitest tests
 sig/               — RBS for what inline comments cannot express
 Steepfile          — type checking config
 public/            — static assets
-.github/workflows/ — CI (GitHub Actions)
+.github/workflows/ — CI, PR previews, preview reaper (GitHub Actions)
+Dockerfile         — production image
+fly.toml           — Fly config for the main demo and PR previews
+.ramekin/          — agent dev container
 ```
 
 ## Domain model
@@ -49,6 +52,19 @@ public/            — static assets
 | Type check | `bundle exec rake steep` |
 | Run dev server | `bundle exec rake dev` (uses `fd \| entr -r rackup`) |
 | Start server | `bundle exec rackup` |
+
+## CI and deployment
+
+- `ci.yml` runs `rake` and audits workflows with zizmor on every push and PR.
+  On main it then builds the image, pushes it to GHCR, cuts a GitHub release
+  named after the image tag, and deploys that image to Fly (`rank-king`).
+- `preview.yml` deploys each PR to its own Fly app and destroys it on close;
+  `reap-previews.yml` cleans up any that were missed.
+- Needs a `FLY_API_TOKEN` secret, available to the `demo`, `pr-*`, and
+  `preview-reaper` environments.
+- Workflow actions are pinned by commit with a tag comment naming that
+  commit, never a branch. Renovate keeps them, gems, and the Docker base
+  image current.
 
 ## Environment variables
 
