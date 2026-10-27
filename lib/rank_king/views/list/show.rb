@@ -37,7 +37,7 @@ module RankKing
         def render_menu
           source = @list.source
 
-          button(class: "icon-button", popovertarget: "list-actions", aria_label: "List actions",
+          button(class: "icon-button", data_size: "lg", popovertarget: "list-actions", aria_label: "List actions",
                  style: "--gl-icon: var(--rk-icon-more)")
           nav(id: "list-actions", popover: true, aria_label: "List actions") do
             ul(class: "card") do

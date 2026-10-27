@@ -66,6 +66,11 @@ main > header {
 
 main > header h1 { flex: 1; min-width: 0; }
 
+/* The header's icon buttons sit beside a heading, not a label: even at
+   the large size an icon at 1em looks slight next to it, so the icon
+   grows inside the same square. */
+main > header .icon-button { --gl-icon-style-size: 1.35em; }
+
 section {
   display: flex;
   flex-direction: column;
