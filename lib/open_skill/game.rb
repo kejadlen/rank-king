@@ -45,8 +45,8 @@ module OpenSkill
     def team_ratings
       teams.zip(rankings).map { |team, rank|
         TeamRating.new(
-          mu: team.sum(0.0) { |p| p.mu },
-          sigma_sq: team.sum(0.0) { |p| p.sigma**2 },
+          mu: team.sum { |p| p.mu }, #: Float
+          sigma_sq: team.sum { |p| p.sigma**2 }, #: Float
           team: team,
           rank: rank, #: Integer
         )
