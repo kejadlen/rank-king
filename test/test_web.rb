@@ -255,7 +255,7 @@ class TestWeb < Minitest::Test
 
     get "/lists/#{list.id}"
     assert_includes last_response.body, %(action="/lists/#{list.id}/axes")
-    assert_includes last_response.body, "First axis"
+    assert_includes last_response.body, 'aria-label="New axis"'
   end
 
   def test_add_axis_from_the_list

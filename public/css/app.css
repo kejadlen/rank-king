@@ -137,6 +137,9 @@ textarea {
   line-height: 1;
 }
 
+/* A list's first axis is made from a lone slot where the tabs will be. */
+form[data-first-axis] { align-items: flex-start; }
+
 /* -------------------- */
 /* List actions menu */
 /* -------------------- */

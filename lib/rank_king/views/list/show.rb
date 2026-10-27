@@ -48,18 +48,14 @@ module RankKing
           dialog(id: "sync-dialog") { render source.form(csrf: @csrf) }
         end
 
-        # Nothing to compare on yet, so the first axis is made here.
+        # Nothing to compare on yet. The "+ Axis" slot stands where the
+        # axis tabs will, and Enter makes the first one.
         def render_items
           action = "/lists/#{@list.id}/axes"
-          form(method: "post", action: action) do
+          form(method: "post", action: action, data_first_axis: true) do
             input(type: "hidden", name: "_csrf", value: @csrf.call(action))
-            label(class: "field") do
-              plain "First axis"
-              input(type: "text", name: "name", required: true, placeholder: "Taste")
-              small { "What to rank these items on." }
-            end
-            footer do
-              button(type: "submit", data_variant: "primary") { "Add axis" }
+            span(class: "tag", data_dashed: true) do
+              input(type: "text", name: "name", required: true, placeholder: "+ Axis", aria_label: "New axis")
             end
           end
 
