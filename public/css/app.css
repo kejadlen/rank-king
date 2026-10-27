@@ -113,13 +113,28 @@ textarea {
   color: var(--gl-color-text-tertiary);
 }
 
-/* The "+ Axis" slot is a dashed tag holding a bare input. */
+/* The "+ Axis" slot is a dashed tag holding a bare input. Gloss' dashed
+   tag only sets a border style on top of `border: none`, which falls
+   back to a 3px medium width; this gives it a hairline instead, with
+   the padding taken in by that pixel so it stands as tall as a tag. */
+.tag[data-dashed] {
+  padding: calc(0.25rem - 1px) calc(0.625rem - 1px);
+  border: 1px dashed var(--gl-color-border-default);
+  transition: border-color var(--gl-dur-fast) var(--gl-ease);
+}
+
+/* The slot takes the focus Input would show, so the input inside it
+   draws none of its own. */
+.tag[data-dashed]:focus-within { border-color: var(--gl-color-accent); }
+
 .tag[data-dashed] input:not([type="checkbox"]):not([type="radio"]) {
   width: 8ch;
   padding: 0;
   border: none;
   background: transparent;
+  box-shadow: none;
   font: inherit;
+  line-height: 1;
 }
 
 /* -------------------- */
