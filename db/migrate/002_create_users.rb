@@ -5,8 +5,8 @@ Sequel.migration do
     create_table(:users) do
       primary_key :id
       String :login, null: false, unique: true
-      DateTime :created_at
-      DateTime :updated_at
+      DateTime :created_at, null: false
+      DateTime :updated_at, null: false
     end
 
     # Lists created before users existed have no owner.
