@@ -1,0 +1,6 @@
+module OpenSkill
+  # Model parameters arrive as whatever the caller wrote, 25 or 8.33.
+  # The model keeps them as Floats, and everything computed from them is
+  # one.
+  type number = Integer | Float
+end

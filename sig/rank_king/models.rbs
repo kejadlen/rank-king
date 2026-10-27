@@ -1,0 +1,33 @@
+# `class List < Sequel::Model(DB[:lists])` has no constant superclass for
+# the inline parser to read, so the models are marked `@rbs skip` in
+# models.rb and signed here: their columns and associations.
+module RankKing
+  class List < Sequel::Model
+    def name: () -> String
+    def items: () -> Array[Item]
+    def axes: () -> Array[Axis]
+    def items_dataset: () -> Sequel::Dataset[Item]
+    def axes_dataset: () -> Sequel::Dataset[Axis]
+  end
+
+  class Item < Sequel::Model
+    def name: () -> String
+    def list_id: () -> Integer
+    def list: () -> List
+  end
+
+  class Axis < Sequel::Model
+    def name: () -> String
+    def list_id: () -> Integer
+    def results: () -> Array[Result]
+  end
+
+  class Result < Sequel::Model
+    def axis_id: () -> Integer
+    def winner_id: () -> Integer
+    def loser_id: () -> Integer
+    def axis: () -> Axis
+    def winner: () -> Item
+    def loser: () -> Item
+  end
+end

@@ -1,0 +1,18 @@
+# The views are Phlex components, and Phlex ships no RBS, so the
+# Steepfile ignores lib/rank_king/views. This is the surface web.rb
+# calls on them.
+module RankKing
+  module Views
+    class Home
+      def initialize: (lists: Array[List], csrf: Method) -> void
+      def call: () -> String
+    end
+
+    module ListViews
+      class Show
+        def initialize: (list: List, csrf: Method) -> void
+        def call: () -> String
+      end
+    end
+  end
+end
