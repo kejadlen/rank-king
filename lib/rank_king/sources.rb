@@ -4,9 +4,11 @@ module RankKing
   module Sources
     # What every source produces: one entry per item currently in the source.
     # external_id is how sync recognizes the same item across snapshots.
+    # Only what any source has goes here; a kind's own item details belong
+    # in its own table.
     # Signed in sig/rank_king/sources.rbs: a Data class.
     # @rbs skip
-    Entry = Data.define(:external_id, :name, :url, :metadata)
+    Entry = Data.define(:external_id, :name, :url)
   end
 end
 

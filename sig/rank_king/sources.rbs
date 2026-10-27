@@ -7,9 +7,8 @@ module RankKing
       attr_reader external_id: String
       attr_reader name: String
       attr_reader url: String?
-      attr_reader metadata: Hash[String, untyped]
 
-      def self.new: (external_id: String, name: String, url: String?, metadata: Hash[String, untyped]) -> instance
+      def self.new: (external_id: String, name: String, url: String?) -> instance
     end
 
     # A source instance: turns a snapshot (the pasted text for a push

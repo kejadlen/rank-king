@@ -14,7 +14,7 @@ module RankKing
       #: (untyped snapshot) -> Array[Entry]
       def entries(snapshot)
         snapshot.to_s.lines.map(&:strip).reject(&:empty?).uniq.map {|line|
-          Entry.new(external_id: line, name: line, url: nil, metadata: {})
+          Entry.new(external_id: line, name: line, url: nil)
         }
       end
     end

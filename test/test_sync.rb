@@ -48,14 +48,13 @@ class TestSync < Minitest::Test
     assert_equal %w[A B], names
   end
 
-  def test_refreshes_name_url_and_metadata
-    Sync.call(@list, [Sources::Entry.new(external_id: "v1", name: "Old", url: nil, metadata: {})])
-    Sync.call(@list, [Sources::Entry.new(external_id: "v1", name: "New", url: "https://example.com/v1", metadata: { "thumb" => "t.jpg" })])
+  def test_refreshes_name_and_url
+    Sync.call(@list, [Sources::Entry.new(external_id: "v1", name: "Old", url: nil)])
+    Sync.call(@list, [Sources::Entry.new(external_id: "v1", name: "New", url: "https://example.com/v1")])
 
     item = Item.first(external_id: "v1")
     assert_equal "New", item.name
     assert_equal "https://example.com/v1", item.url
-    assert_equal({ "thumb" => "t.jpg" }, item.metadata)
   end
 
   def test_text_source_strips_blank_and_duplicate_lines

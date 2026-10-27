@@ -14,7 +14,6 @@ Sequel.migration do
     alter_table(:items) do
       add_column :external_id, String
       add_column :url, String
-      add_column :metadata, String, null: false, default: "{}"
       add_column :archived_at, DateTime
       add_index [:list_id, :external_id], unique: true
     end
@@ -30,7 +29,6 @@ Sequel.migration do
       drop_index [:list_id, :external_id]
       drop_column :external_id
       drop_column :url
-      drop_column :metadata
       drop_column :archived_at
     end
 

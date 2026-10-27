@@ -27,8 +27,6 @@ module RankKing
     def list: () -> List
     def external_id: () -> String?
     def url: () -> String?
-    def metadata: () -> Hash[String, untyped]
-    def metadata=: (Hash[String, untyped] value) -> void
     def archived_at: () -> Time?
   end
 

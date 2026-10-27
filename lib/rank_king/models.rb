@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "json"
-
 require_relative "db"
 require_relative "sources"
 
@@ -26,13 +24,6 @@ module RankKing
 
   # @rbs skip
   class Item < Sequel::Model(DB[:items])
-    # JSON by hand rather than Sequel's serialization plugin, which passes
-    # json 3.1 an option it no longer takes.
-    def metadata = JSON.parse(super)
-    def metadata=(value)
-      super(JSON.generate(value))
-    end
-
     many_to_one :list, class: "RankKing::List"
   end
 

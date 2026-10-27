@@ -11,5 +11,4 @@ target :lib do
   signature "sig"
 
   library "securerandom"
-  library "json"
 end
