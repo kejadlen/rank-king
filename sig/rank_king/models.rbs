@@ -2,7 +2,15 @@
 # the inline parser to read, so the models are marked `@rbs skip` in
 # models.rb and signed here: their columns and associations.
 module RankKing
+  class User < Sequel::Model
+    def login: () -> String
+    def lists: () -> Array[List]
+    def self.for_login: (String login) -> User
+  end
+
   class List < Sequel::Model
+    def user_id: () -> Integer?
+    def user: () -> User?
     def name: () -> String
     def items: () -> Array[Item]
     def axes: () -> Array[Axis]

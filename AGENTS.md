@@ -15,14 +15,17 @@ Rank King is a webapp for ranking items along multiple axes through pairwise com
 ## Repository layout
 
 ```
-config.ru          — Rack entrypoint
+config.ru          — Rack entrypoint (expects the proxy's Remote-User header)
+demo.ru            — config.ru plus StubLogin, for dev and the Fly apps
 Gemfile            — dependencies
 Rakefile           — rake tasks (test, dev)
 db/migrate/        — Sequel migrations
 lib/rank_king/     — app code
   config.rb        — Config data class, reads from ENV
   db.rb            — Sequel connection + migration runner
-  models.rb        — Sequel models (List, Item, Axis, Result)
+  models.rb        — Sequel models (User, List, Item, Axis, Result)
+  proxy_auth.rb    — reads the login from Remote-User
+  stub_login.rb    — writes a fixed login where there is no proxy (demo.ru)
   web.rb           — Roda routes
   views/           — Phlex view components
 lib/open_skill/    — OpenSkill rating library (pure Ruby)
@@ -38,7 +41,8 @@ fly.toml           — Fly config for the main demo and PR previews
 
 ## Domain model
 
-- **List** has many Items and Axes
+- **User** has many Lists; identified by the login on the `Remote-User` header
+- **List** belongs to a User and has many Items and Axes
 - **Item** belongs to a List
 - **Axis** belongs to a List, has many Results
 - **Result** belongs to an Axis, a winner (Item), and a loser (Item)
@@ -50,8 +54,8 @@ fly.toml           — Fly config for the main demo and PR previews
 | Type check and test | `bundle exec rake` |
 | Run tests | `bundle exec rake test` |
 | Type check | `bundle exec rake steep` |
-| Run dev server | `bundle exec rake dev` (uses `fd \| entr -r rackup`) |
-| Start server | `bundle exec rackup` |
+| Run dev server | `bundle exec rake dev` (uses `fd \| entr -r rackup demo.ru`) |
+| Start server | `bundle exec rackup` (behind the proxy) or `bundle exec rackup demo.ru` (stub login) |
 
 ## CI and deployment
 
@@ -80,6 +84,8 @@ Tests set `DATABASE_URL=:memory:` in `test/test_helper.rb`.
 - Models use `Sequel::Model` with `timestamps` plugin
 - Views are Phlex components under `lib/rank_king/views/`
 - CSRF protection is on for all POST routes
+- Every request needs a `Remote-User` header or it gets a 401. That is safe only because a proxy (Tailscale identity) writes the header. `StubLogin` fills it in for `demo.ru` (dev server, Fly apps) and nowhere else: never in `config.ru`, and never in front of real data.
+- Lists are private to their owner (404 for anyone else); lists from before users existed have no owner and are visible to everyone
 - Config is a frozen `Data.define` value object
 - Types are inline RBS comments (`#:` before a method, `# @rbs` for the
   rest), checked by `rake steep`. `sig/` holds only what that syntax

@@ -25,6 +25,10 @@ module Sequel
   class Dataset[out T]
     def where: (*untyped conditions) -> Dataset[T]
 
+    def order: (*untyped columns) -> Dataset[T]
+
+    def all: () -> Array[T]
+
     def first: () -> T?
   end
 
@@ -38,6 +42,11 @@ module Sequel
     def self.create: (**untyped values) -> instance
 
     def self.all: () -> Array[instance]
+
+    def self.where: (*untyped conditions) -> Dataset[instance]
+
+    # The first row matching these columns, created when there is none.
+    def self.find_or_create: (**untyped values) -> instance
 
     # The row with this primary key, or nil.
     def self.[]: (untyped id) -> instance?

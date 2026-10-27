@@ -4,7 +4,9 @@
 # Matchers stay untyped on purpose. Roda's matcher vocabulary is open,
 # and the block arguments a match yields depend on which matcher matched.
 class Roda
-  def self.plugin: (Symbol plugin, *untyped args, **untyped options) -> void
+  # The configure blocks vary by plugin (error_handler passes the
+  # exception), so the block takes anything, like the matchers below.
+  def self.plugin: (Symbol plugin, *untyped args, **untyped options) ?{ (*untyped) [self: instance] -> untyped } -> void
 
   # The block is the router, run against a fresh instance per request.
   def self.route: () { (RodaRequest) [self: instance] -> untyped } -> void
@@ -18,7 +20,11 @@ class Roda
   def check_csrf!: () -> void
   def csrf_token: (?String? path, ?String? method) -> String
 
+  def response: () -> RodaResponse
+
   class RodaRequest
+    def env: () -> Hash[String, untyped]
+
     def is: (*untyped matchers) { (*untyped) -> untyped } -> void
     def on: (*untyped matchers) { (*untyped) -> untyped } -> void
     def root: () { () -> untyped } -> void
@@ -32,5 +38,10 @@ class Roda
 
     # The halt plugin's: ends the request with this status.
     def halt: (?Integer status) -> bot
+  end
+
+  class RodaResponse
+    def []=: (String header, String value) -> void
+    def status=: (Integer status) -> void
   end
 end

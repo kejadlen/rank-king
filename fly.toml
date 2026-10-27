@@ -2,7 +2,10 @@
 # deploy job in .github/workflows/ci.yml) and the per-PR previews (the
 # review-app action in .github/workflows/preview.yml, which overrides
 # the app name with the PR's). DATABASE_URL defaults to :memory:, so
-# every deploy starts empty.
+# every deploy starts empty. Both run demo.ru rather than the image's
+# config.ru: nothing writes the Remote-User header in front of them, so
+# StubLogin stands in a login, and the one demo user's lists are served
+# to anyone who opens the URL.
 #
 # The app name is Fly's, not GitHub's, so it has to be unique across all
 # of Fly and a taken one fails the deploy. ci.yml spells it twice more,
@@ -12,6 +15,9 @@ app = 'rank-king'
 primary_region = 'sjc'
 
 [build]
+
+[processes]
+  app = 'rackup -o 0.0.0.0 demo.ru'
 
 [http_service]
   internal_port = 9292
