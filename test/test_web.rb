@@ -12,11 +12,15 @@ class TestWeb < Minitest::Test
 
   def app = RankKing::Web.app
 
+  LOGIN = "alpha@example.com"
+
   def setup
+    header "Remote-User", LOGIN
     RankKing::DB[:results].delete
     RankKing::DB[:axes].delete
     RankKing::DB[:items].delete
     RankKing::DB[:lists].delete
+    RankKing::DB[:users].delete
   end
 
   def test_root_shows_empty_state
@@ -157,7 +161,40 @@ class TestWeb < Minitest::Test
     assert_equal 422, last_response.status
   end
 
+  def test_lists_belong_to_the_current_user
+    create_list(name: "Foods", items: "Pizza\nSushi")
+
+    assert_equal LOGIN, RankKing::List.first.user.login
+  end
+
+  def test_requires_login
+    header "Remote-User", nil
+    get "/"
+    assert_equal 401, last_response.status
+  end
+
+  def test_lists_are_private
+    as("alice@example.com") { create_list(name: "Alpaca", items: "A\nB") }
+    assert_equal 1, RankKing::List.count
+    list = RankKing::List.first
+
+    as("bob@example.com") do
+      get "/"
+      refute_includes last_response.body, "Alpaca"
+
+      get "/lists/#{list.id}"
+      assert_equal 404, last_response.status
+    end
+  end
+
   private
+
+  def as(login)
+    header "Remote-User", login
+    yield
+  ensure
+    header "Remote-User", LOGIN
+  end
 
   def csrf_post(path, params = {})
     get "/"

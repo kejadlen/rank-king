@@ -6,7 +6,7 @@ Minitest::TestTask.create
 
 desc "Start dev server with auto-restart"
 task :dev do
-  sh "fd | entr -r rackup"
+  sh "fd | entr -r rackup -o localhost demo.ru"
 end
 
 desc "Type check lib against the RBS comments in it"

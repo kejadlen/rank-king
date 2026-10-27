@@ -3,6 +3,7 @@
 require "roda"
 
 require_relative "models"
+require_relative "proxy_auth"
 require_relative "sync"
 require_relative "views/home"
 require_relative "views/list/show"
@@ -13,12 +14,18 @@ module RankKing
     plugin :static, %w[ /css /favicon.svg ]
     plugin :sessions, secret: CONFIG.session_secret
     plugin :route_csrf, csrf_failure: :empty_403, check_request_methods: %w[POST]
+    plugin :error_handler, classes: [ProxyAuth::MissingLogin] do |e|
+      response.status = 401
+      response["Content-Type"] = "text/plain"
+      "Unauthorized: #{e.message}.\n"
+    end
 
     route do |r|
       check_csrf!
+      user = User.find_or_create(login: ProxyAuth.login(r.env))
 
       r.root do
-        lists = List.all
+        lists = List.where(user_id: [user.id, nil]).order(:id).all
         Views::Home.new(lists: lists, csrf: method(:csrf_token)).call
       end
 
@@ -35,7 +42,7 @@ module RankKing
             axis_names = axes_text.lines.map(&:strip).reject(&:empty?)
 
             list = DB.transaction do
-              l = List.create(name: name, source_kind: Sources::Text.kind)
+              l = List.create(name: name, user_id: user.id, source_kind: Sources::Text.kind)
               Sync.call(l, entries)
               axis_names.each { |n| Axis.create(list_id: l.id, name: n) }
               l
@@ -46,7 +53,9 @@ module RankKing
         end
 
         r.on Integer do |list_id|
-          @list = List[list_id]
+          # Lists are private to their owner; ones from before users
+          # existed have none and stay visible to everyone.
+          @list = List.where(id: list_id, user_id: [user.id, nil]).first
           r.halt 404 unless @list
 
           r.is do
