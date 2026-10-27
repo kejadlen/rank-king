@@ -4,9 +4,6 @@ module RankKing
   module Sources
     # A push source: the snapshot is pasted text, one item per line.
     class Text
-      #: () -> String
-      def self.kind = "text"
-
       #: () -> bool
       def self.push? = true
 

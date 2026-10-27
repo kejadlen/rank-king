@@ -1,5 +1,5 @@
 # Entry is a Data class, whose members the inline parser cannot read, and
-# the interfaces every source kind meets are named here so Sources::ALL
+# the interfaces every source kind meets are named here so Sources.fetch
 # and List#source can be typed by them.
 module RankKing
   module Sources
@@ -18,9 +18,8 @@ module RankKing
       def entries: (untyped snapshot) -> Array[Entry]
     end
 
-    # A source kind, the class registered in Sources::ALL.
+    # A source kind: a class in Sources, named by a list's source_kind.
     interface _SourceClass
-      def kind: () -> String
       def push?: () -> bool
       # The source for a list, configured from the kind's own table.
       def for: (List list) -> _Source

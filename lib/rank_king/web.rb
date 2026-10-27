@@ -42,7 +42,7 @@ module RankKing
             axis_names = axes_text.lines.map(&:strip).reject(&:empty?)
 
             list = DB.transaction do
-              l = List.create(name: name, user_id: user.id, source_kind: Sources::Text.kind)
+              l = List.create(name: name, user_id: user.id, source_kind: "Text")
               Sync.call(l, entries)
               axis_names.each { |n| Axis.create(list_id: l.id, name: n) }
               l

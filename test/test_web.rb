@@ -129,7 +129,7 @@ class TestWeb < Minitest::Test
     create_list(name: "Foods", items: "Pizza\nSushi")
     list = RankKing::List.first
 
-    assert_equal "text", list.source_kind
+    assert_equal "Text", list.source_kind
     assert_equal %w[Pizza Sushi], list.items.map(&:external_id)
   end
 

@@ -14,11 +14,8 @@ require_relative "sources/text"
 
 module RankKing
   module Sources
-    ALL = {
-      Text.kind => Text,
-    }.freeze #: Hash[String, _SourceClass]
-
+    # A list's source_kind names a class in this module.
     #: (String kind) -> _SourceClass
-    def self.fetch(kind) = ALL.fetch(kind)
+    def self.fetch(kind) = const_get(kind, false)
   end
 end

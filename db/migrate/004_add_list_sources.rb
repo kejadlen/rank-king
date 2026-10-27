@@ -4,10 +4,10 @@ Sequel.migration do
   up do
     # Every list gets its items from exactly one source. Lists before this
     # were made from the textarea, so they default to the text source. A
-    # kind that needs configuring gets its own table keyed by list_id; text
+    # kind that needs configuring gets its own table keyed by list_id; Text
     # needs none.
     alter_table(:lists) do
-      add_column :source_kind, String, null: false, default: "text"
+      add_column :source_kind, String, null: false, default: "Text"
       add_column :synced_at, DateTime
     end
 
