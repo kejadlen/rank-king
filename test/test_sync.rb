@@ -13,12 +13,10 @@ class TestSync < Minitest::Test
     DB[:results].delete
     DB[:axes].delete
     DB[:items].delete
-    DB[:sources].delete
     DB[:lists].delete
     DB[:users].delete
 
     @list = List.create(name: "Videos")
-    @source = Source.create(list_id: @list.id, kind: "text")
   end
 
   def test_adds_new_entries
@@ -26,7 +24,7 @@ class TestSync < Minitest::Test
 
     assert_equal Sync::Summary.new(added: 2, restored: 0, archived: 0), summary
     assert_equal %w[A B], names
-    refute_nil @source.reload.last_synced_at
+    refute_nil @list.reload.synced_at
   end
 
   def test_archives_missing_entries_and_keeps_their_rows
@@ -50,8 +48,8 @@ class TestSync < Minitest::Test
   end
 
   def test_refreshes_name_url_and_metadata
-    Sync.call(@source, [Sources::Entry.new(external_id: "v1", name: "Old")])
-    Sync.call(@source, [Sources::Entry.new(external_id: "v1", name: "New", url: "https://example.com/v1", metadata: { "thumb" => "t.jpg" })])
+    Sync.call(@list, [Sources::Entry.new(external_id: "v1", name: "Old")])
+    Sync.call(@list, [Sources::Entry.new(external_id: "v1", name: "New", url: "https://example.com/v1", metadata: { "thumb" => "t.jpg" })])
 
     item = Item.first(external_id: "v1")
     assert_equal "New", item.name
@@ -66,7 +64,7 @@ class TestSync < Minitest::Test
 
   private
 
-  def sync(*lines) = Sync.call(@source, Sources::Text.new.entries(lines.join("\n")))
+  def sync(*lines) = Sync.call(@list, Sources::Text.new.entries(lines.join("\n")))
 
   def names = @list.items_dataset.order(:id).map(:name)
 end
