@@ -35,9 +35,8 @@ module RankKing
             axis_names = axes_text.lines.map(&:strip).reject(&:empty?)
 
             list = DB.transaction do
-              l = List.create(name: name)
-              source = Source.create(list_id: l.id, kind: Sources::Text.kind)
-              Sync.call(source, entries)
+              l = List.create(name: name, source_kind: Sources::Text.kind)
+              Sync.call(l, entries)
               axis_names.each { |n| Axis.create(list_id: l.id, name: n) }
               l
             end
@@ -56,12 +55,9 @@ module RankKing
             end
           end
 
-          r.on "sources", Integer, "sync" do |source_id|
+          r.on "sync" do
             r.post do
-              source = @list.sources_dataset.where(id: source_id).first
-              r.halt 404 unless source
-
-              Sync.call(source, source.plugin.entries(r.params["snapshot"]))
+              Sync.call(@list, @list.source.entries(r.params["snapshot"]))
 
               r.redirect "/lists/#{@list.id}"
             end

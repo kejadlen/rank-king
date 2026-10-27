@@ -21,10 +21,10 @@ db/migrate/        — Sequel migrations
 lib/rank_king/     — app code
   config.rb        — Config data class, reads from ENV
   db.rb            — Sequel connection + migration runner
-  models.rb        — Sequel models (List, Item, Source, Axis, Result)
+  models.rb        — Sequel models (List, Item, Axis, Result)
   sources.rb       — hardcoded registry of source kinds (Sources::ALL)
   sources/         — one class per source kind
-  sync.rb          — reconciles a source's items with a fresh snapshot
+  sync.rb          — reconciles a list's items with a fresh snapshot from its source
   web.rb           — Roda routes
   views/           — Phlex view components
 lib/open_skill/    — OpenSkill rating library (pure Ruby)
@@ -35,9 +35,8 @@ public/            — static assets
 
 ## Domain model
 
-- **List** has many Items, Sources, and Axes
-- **Source** belongs to a List and produces its Items; `kind` picks a class from `Sources::ALL`
-- **Item** belongs to a List and a Source; items missing from the latest sync are archived (`archived_at`) and hidden everywhere
+- **List** has many Items and Axes, and one source (`source_kind` picks a class from `Sources::ALL`, `source_config` configures it) that produces its Items
+- **Item** belongs to a List; items missing from the latest sync are archived (`archived_at`) and hidden everywhere
 - **Axis** belongs to a List, has many Results
 - **Result** belongs to an Axis, a winner (Item), and a loser (Item)
 

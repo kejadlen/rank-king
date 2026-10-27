@@ -16,7 +16,6 @@ class TestWeb < Minitest::Test
     RankKing::DB[:results].delete
     RankKing::DB[:axes].delete
     RankKing::DB[:items].delete
-    RankKing::DB[:sources].delete
     RankKing::DB[:lists].delete
   end
 
@@ -126,16 +125,15 @@ class TestWeb < Minitest::Test
     create_list(name: "Foods", items: "Pizza\nSushi")
     list = RankKing::List.first
 
-    assert_equal ["text"], list.sources.map(&:kind)
-    assert_equal %w[Pizza Sushi], list.sources.first.items.map(&:external_id)
+    assert_equal "text", list.source_kind
+    assert_equal %w[Pizza Sushi], list.items.map(&:external_id)
   end
 
   def test_sync_adds_and_hides_items
     create_list(name: "Foods", items: "Pizza\nSushi", axes: "Taste")
     list = RankKing::List.first
-    source = list.sources.first
 
-    csrf_post "/lists/#{list.id}/sources/#{source.id}/sync", { snapshot: "Pizza\nTacos" }
+    csrf_post "/lists/#{list.id}/sync", { snapshot: "Pizza\nTacos" }
     assert last_response.redirect?
 
     assert_equal %w[Pizza Tacos], list.items_dataset.order(:id).map(:name)
@@ -149,7 +147,7 @@ class TestWeb < Minitest::Test
     create_list(name: "Foods", items: "Pizza\nSushi\nTacos", axes: "Taste")
     list = RankKing::List.first
     sushi = list.items.find { |i| i.name == "Sushi" }
-    RankKing::Sync.call(list.sources.first, RankKing::Sources::Text.new.entries("Pizza\nTacos"))
+    RankKing::Sync.call(list, RankKing::Sources::Text.new.entries("Pizza\nTacos"))
 
     csrf_post "/lists/#{list.id}/results", {
       axis_id: list.axes.first.id,

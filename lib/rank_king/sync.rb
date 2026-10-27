@@ -3,15 +3,16 @@
 require_relative "models"
 
 module RankKing
-  # Reconciles a source's items with a fresh snapshot of entries. Items missing
-  # from the snapshot are archived rather than deleted so their results survive,
-  # and come back with their history if they reappear.
+  # Reconciles a list's items with a fresh snapshot of entries from its
+  # source. Items missing from the snapshot are archived rather than deleted
+  # so their results survive, and come back with their history if they
+  # reappear.
   module Sync
     Summary = Data.define(:added, :restored, :archived)
 
-    def self.call(source, entries, now: Time.now)
+    def self.call(list, entries, now: Time.now)
       DB.transaction do
-        existing = source.items_dataset.exclude(external_id: nil).to_hash(:external_id)
+        existing = Item.where(list_id: list.id).exclude(external_id: nil).to_hash(:external_id)
         added = restored = 0
 
         entries.each do |entry|
@@ -20,7 +21,7 @@ module RankKing
             restored += 1 if item.archived_at
             item.update(attrs)
           else
-            Item.create(attrs.merge(list_id: source.list_id, source_id: source.id, external_id: entry.external_id))
+            Item.create(attrs.merge(list_id: list.id, external_id: entry.external_id))
             added += 1
           end
         end
@@ -28,7 +29,7 @@ module RankKing
         gone = existing.values.select {|item| item.archived_at.nil? }
         gone.each {|item| item.update(archived_at: now) }
 
-        source.update(last_synced_at: now)
+        list.update(synced_at: now)
         Summary.new(added:, restored:, archived: gone.size)
       end
     end
