@@ -1,0 +1,21 @@
+# Rating and TeamRating are Data classes, whose members the inline parser
+# cannot read. They are marked `@rbs skip` and signed here instead.
+module OpenSkill
+  class Rating
+    attr_reader mu: Float
+    attr_reader sigma: Float
+
+    def self.new: (Float mu, Float sigma) -> instance
+                | (mu: Float, sigma: Float) -> instance
+  end
+
+  class TeamRating
+    attr_reader mu: Float
+    attr_reader sigma_sq: Float
+    attr_reader team: Array[Rating]
+    attr_reader rank: Integer
+
+    def self.new: (mu: Float, sigma_sq: Float, team: Array[Rating], rank: Integer) -> instance
+
+  end
+end

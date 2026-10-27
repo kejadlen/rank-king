@@ -5,15 +5,18 @@
 module OpenSkill
   module Statistics
     # Standard normal PDF
+    #: (Float x) -> Float
     def self.phi_minor(x)
       Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math::PI)
     end
 
     # Standard normal CDF via Math.erf
+    #: (Float x) -> Float
     def self.phi_major(x)
       0.5 * (1.0 + Math.erf(x / Math.sqrt(2)))
     end
 
+    #: (Float x, Float t) -> Float
     def self.v(x, t)
       xt = x - t
       denom = phi_major(xt)
@@ -22,17 +25,19 @@ module OpenSkill
       phi_minor(xt) / denom
     end
 
+    #: (Float x, Float t) -> Float
     def self.w(x, t)
       xt = x - t
       denom = phi_major(xt)
       if denom < Float::EPSILON
-        return x.negative? ? 1 : 0
+        return x.negative? ? 1.0 : 0.0
       end
 
       vxt = v(x, t)
       vxt * (vxt + xt)
     end
 
+    #: (Float x, Float t) -> Float
     def self.vt(x, t)
       xx = x.abs
       b = phi_major(t - xx) - phi_major(-t - xx)
@@ -44,6 +49,7 @@ module OpenSkill
       (x.negative? ? -a : a) / b
     end
 
+    #: (Float x, Float t) -> Float
     def self.wt(x, t)
       xx = x.abs
       b = phi_major(t - xx) - phi_major(-t - xx)
