@@ -22,8 +22,14 @@ class Roda
 
   def response: () -> RodaResponse
 
+  # The sessions plugin's: the signed cookie session.
+  def session: () -> Hash[String, untyped]
+
   class RodaRequest
     def env: () -> Hash[String, untyped]
+
+    # Scheme, host and port, as the client reached the app.
+    def base_url: () -> String
 
     def is: (*untyped matchers) { (*untyped) -> untyped } -> void
     def on: (*untyped matchers) { (*untyped) -> untyped } -> void

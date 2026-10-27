@@ -14,6 +14,20 @@ module RankKing
       #: () -> String
       def self.title = "Typed list"
 
+      #: (User user) -> _Component
+      def self.fields(user) = Views::Sources::TextFields.new
+
+      # Adds the items typed into the new-list form, of which there must
+      # be at least two.
+      #: (List list, Hash[String, untyped] params) -> bool
+      def self.create(list, params)
+        names = params["items"].to_s.lines.map(&:strip).reject(&:empty?)
+        return false if names.size < 2
+
+        names.each { |name| Item.create(list_id: list.id, name:) }
+        true
+      end
+
       #: (List list) -> void
       def initialize(list)
         @list = list

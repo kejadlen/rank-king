@@ -8,16 +8,36 @@ module RankKing
       def call: () -> String
     end
 
+    class Settings
+      def initialize: (user: User, google_configured: bool, csrf: Method) -> void
+      def call: () -> String
+    end
+
     module Sources
       class Text
         def initialize: (list: List, csrf: Method) -> void
+        def call: () -> String
+      end
+
+      class TextFields
+        def initialize: () -> void
+        def call: () -> String
+      end
+
+      class YouTubePlaylist
+        def initialize: (list: List, csrf: Method) -> void
+        def call: () -> String
+      end
+
+      class YouTubePlaylistFields
+        def initialize: (connected: bool, configured: bool) -> void
         def call: () -> String
       end
     end
 
     module ListViews
       class New
-        def initialize: (sources: Hash[String, String], csrf: Method) -> void
+        def initialize: (sources: Array[[String, String, ::RankKing::Sources::_Component]], csrf: Method) -> void
         def call: () -> String
       end
 

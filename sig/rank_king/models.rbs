@@ -6,6 +6,12 @@ module RankKing
     def login: () -> String
     def lists: () -> Array[List]
     def lists_dataset: () -> Sequel::Dataset[List]
+    def google_account: () -> GoogleAccount?
+  end
+
+  class GoogleAccount < Sequel::Model
+    def user_id: () -> Integer
+    def refresh_token: () -> String
   end
 
   class List < Sequel::Model

@@ -10,6 +10,12 @@ module RankKing
   # @rbs skip
   class User < Sequel::Model(DB[:users])
     one_to_many :lists, class: "RankKing::List"
+    one_to_one :google_account, class: "RankKing::GoogleAccount"
+  end
+
+  # @rbs skip
+  class GoogleAccount < Sequel::Model(DB[:google_accounts])
+    many_to_one :user, class: "RankKing::User"
   end
 
   # @rbs skip

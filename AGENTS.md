@@ -24,7 +24,8 @@ db/migrate/        — Sequel migrations
 lib/rank_king/     — app code
   config.rb        — Config data class, reads from ENV
   db.rb            — Sequel connection + migration runner
-  models.rb        — Sequel models (User, List, Item, Axis, Result)
+  models.rb        — Sequel models (User, GoogleAccount, List, Item, Axis, Result)
+  google.rb        — Google OAuth and the YouTube Data API, over a swappable transport
   sources.rb       — Sources.fetch: a list's source_kind names a class in Sources
   sources/         — one class per source kind
   sync.rb          — reconciles a list's items with a fresh snapshot from a fetching source
@@ -39,7 +40,7 @@ Steepfile          — type checking config
 public/            — static assets
   vendor/gloss/    — vendored Gloss CSS and JS (refresh with rake gloss:vendor)
   css/app.css      — Rank King's layout over Gloss
-  js/app.js        — axis tags and delete confirmation
+  js/app.js        — axis tags, confirmations, busy buttons, new-list source fields
 .github/workflows/ — CI, PR previews, preview reaper (GitHub Actions)
 Dockerfile         — production image
 fly.toml           — Fly config for the main demo and PR previews
@@ -48,8 +49,9 @@ fly.toml           — Fly config for the main demo and PR previews
 
 ## Domain model
 
-- **User** has many Lists; identified by the login on the `Remote-User` header
+- **User** has many Lists; identified by the login on the `Remote-User` header. Their settings page (`/settings`) connects a Google account (**GoogleAccount**, which keeps only the refresh token)
 - **List** belongs to a User and has many Items and Axes, and one source (`source_kind` names a class in `Sources`). Each source renders its own sync dialog on the list page and applies what it posts: `Text`'s edits items by id, and a kind that fetches calls `Sync.call`. A fetching kind keeps its config in its own table keyed by `list_id` and its per-item details in a table keyed by `item_id`
+- Sources: `Text` (typed in, edited by id) and `YouTubePlaylist` (follows one of the owner's playlists through their Google account; `youtube_playlist_sources` by `list_id`, `youtube_playlist_items` by `item_id`)
 - **Item** belongs to a List; removed items, and items missing from the latest sync, are archived (`archived_at`) and hidden everywhere
 - **Axis** belongs to a List, has many Results
 - **Result** belongs to an Axis, a winner (Item), and a loser (Item)
@@ -82,8 +84,15 @@ fly.toml           — Fly config for the main demo and PR previews
 
 - `DATABASE_URL` — SQLite path (default: `:memory:`)
 - `SESSION_SECRET` — session signing key (auto-generated if unset)
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — a Google OAuth web client
+  with the YouTube Data API enabled, for connecting Google. Its redirect
+  URI is `<app URL>/settings/google/callback`. Without them YouTube lists
+  are not offered. A consent screen left in Testing mode expires refresh
+  tokens after 7 days.
 
-Tests set `DATABASE_URL=:memory:` in `test/test_helper.rb`.
+Tests set `DATABASE_URL=:memory:` and a dummy Google client in
+`test/test_helper.rb`, and swap `RankKing::Google.transport` so no
+request leaves them.
 
 ## Conventions
 
@@ -102,7 +111,9 @@ Tests set `DATABASE_URL=:memory:` in `test/test_helper.rb`.
   rather than a new button or screen.
 - A list's source is fixed when it is made. `Sources::KINDS` lists the
   kinds the new-list form offers, and each kind's `title` names it there
-  and in settings. Its sync dialog opens from the list's ⋯ menu.
+  and in settings. Its sync dialog opens from the list's ⋯ menu. Each
+  kind also renders its own fields on the new-list form (`fields`) and
+  sets the new list up from them (`create`).
 - Every request needs a `Remote-User` header or it gets a 401. That is safe only because a proxy (Tailscale identity) writes the header. `StubLogin` fills it in for `demo.ru` (dev server, Fly apps) and nowhere else: never in `config.ru`, and never in front of real data.
 - Lists are private to their owner (404 for anyone else)
 - Config is a frozen `Data.define` value object

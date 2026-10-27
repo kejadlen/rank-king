@@ -1,0 +1,9 @@
+# The transport's writer is defined on the singleton class, which the
+# inline parser cannot read; tests are what call it.
+module RankKing
+  module Google
+    self.@transport: (^(Symbol, String, Hash[Symbol, String], String?) -> Hash[String, untyped])?
+
+    def self.transport=: (^(Symbol, String, Hash[Symbol, String], String?) -> Hash[String, untyped]) -> void
+  end
+end

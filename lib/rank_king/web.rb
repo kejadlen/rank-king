@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
 require "roda"
+require "securerandom"
 
 require_relative "models"
 require_relative "proxy_auth"
+require_relative "google"
 require_relative "views/home"
+require_relative "views/settings"
 require_relative "views/list/new"
 require_relative "views/list/show"
 require_relative "views/list/compare"
@@ -16,10 +19,15 @@ module RankKing
     plugin :static, %w[ /css /js /vendor ]
     plugin :sessions, secret: CONFIG.session_secret
     plugin :route_csrf, csrf_failure: :empty_403, check_request_methods: %w[POST]
-    plugin :error_handler, classes: [ProxyAuth::MissingLogin] do |e|
-      response.status = 401
+    plugin :error_handler, classes: [ProxyAuth::MissingLogin, Google::Error] do |e|
       response["Content-Type"] = "text/plain"
-      "Unauthorized: #{e.message}.\n"
+      if e.is_a?(Google::Error)
+        response.status = 502
+        "Google: #{e.message}\n"
+      else
+        response.status = 401
+        "Unauthorized: #{e.message}.\n"
+      end
     end
 
     route do |r|
@@ -31,6 +39,46 @@ module RankKing
         Views::Home.new(lists: lists).call
       end
 
+      r.on "settings" do
+        r.get true do
+          Views::Settings.new(user:, google_configured: Google.configured?, csrf: method(:csrf_token)).call
+        end
+
+        # Connecting Google is the OAuth dance: off to Google with a state
+        # only this session knows, and back with a code for a refresh token.
+        r.on "google" do
+          redirect_uri = "#{r.base_url}/settings/google/callback"
+
+          r.get "connect" do
+            r.halt 404 unless Google.configured?
+
+            state = SecureRandom.hex(16)
+            session["google_state"] = state
+            r.redirect Google.authorize_url(redirect_uri:, state:)
+          end
+
+          r.get "callback" do
+            state = session.delete("google_state").to_s
+            r.halt 403 if state.empty? || !Rack::Utils.secure_compare(state, r.params["state"].to_s)
+            # The user said no on Google's side.
+            r.redirect "/settings" if r.params["error"]
+
+            refresh_token = Google.refresh_token(r.params["code"].to_s, redirect_uri:)
+            if (account = user.google_account)
+              account.update(refresh_token:)
+            else
+              GoogleAccount.create(user_id: user.id, refresh_token:)
+            end
+            r.redirect "/settings"
+          end
+
+          r.post "disconnect" do
+            user.google_account&.destroy
+            r.redirect "/settings"
+          end
+        end
+      end
+
       r.on "lists" do
         r.is do
           r.post do
@@ -40,28 +88,27 @@ module RankKing
             source_kind = r.params["source"] || "Text"
             r.halt 422 unless Sources::KINDS.include?(source_kind)
 
-            items_text = r.params["items"].to_s.strip
-            r.halt 422 if items_text.empty?
-
-            item_names = items_text.lines.map(&:strip).reject(&:empty?)
-            r.halt 422 if item_names.size < 2
-
             axis_names = names_param(r.params["axes"])
 
+            # The source fills the list from its own fields, or turns it
+            # down and nothing is made.
             list = DB.transaction do
               l = List.create(name: name, user_id: user.id, source_kind: source_kind)
-              item_names.each { |n| Item.create(list_id: l.id, name: n) }
+              raise Sequel::Rollback unless Sources.fetch(source_kind).create(l, r.params)
+
               axis_names.each { |n| Axis.create(list_id: l.id, name: n) }
               l
             end
+            r.halt 422 unless list
 
             r.redirect "/lists/#{list.id}"
           end
         end
 
         r.get "new" do
-          kinds = Sources::KINDS.to_h do |kind|
-            [kind, Sources.fetch(kind).title] #: [String, String]
+          kinds = Sources::KINDS.map do |kind|
+            source = Sources.fetch(kind)
+            [kind, source.title, source.fields(user)] #: [String, String, Sources::_Component]
           end
           Views::ListViews::New.new(sources: kinds, csrf: method(:csrf_token)).call
         end

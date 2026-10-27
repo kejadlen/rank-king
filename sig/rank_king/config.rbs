@@ -5,7 +5,9 @@ module RankKing
   class Config
     attr_reader database_url: String
     attr_reader session_secret: String
+    attr_reader google_client_id: String?
+    attr_reader google_client_secret: String?
 
-    def self.new: (database_url: String, session_secret: String) -> instance
+    def self.new: (database_url: String, session_secret: String, google_client_id: String?, google_client_secret: String?) -> instance
   end
 end

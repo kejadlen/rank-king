@@ -40,6 +40,13 @@ module RankKing
 
       # What the kind is called where a list's source is chosen or shown.
       def title: () -> String
+
+      # The kind's own fields on the new-list form.
+      def fields: (User user) -> _Component
+
+      # Sets a new list up from what those fields posted: false, and the
+      # list is not made, when they are not enough to go on.
+      def create: (List list, Hash[String, untyped] params) -> bool
     end
 
     # A view component, as a source's form is.
