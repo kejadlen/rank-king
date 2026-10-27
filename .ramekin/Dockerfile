@@ -43,3 +43,5 @@ COPY Gemfile Gemfile.lock /tmp/bundle/
 RUN cd /tmp/bundle \
  && bundle install --jobs 4 \
  && rm -rf /tmp/bundle
+
+ENV RANGER_DEFAULT_BACKLOG=rank-king
