@@ -48,8 +48,21 @@ module RankKing
           dialog(id: "sync-dialog") { render source.form(csrf: @csrf) }
         end
 
+        # Nothing to compare on yet, so the first axis is made here.
         def render_items
-          p { "No axes yet. Add one in settings to start comparing." }
+          action = "/lists/#{@list.id}/axes"
+          form(method: "post", action: action) do
+            input(type: "hidden", name: "_csrf", value: @csrf.call(action))
+            label(class: "field") do
+              plain "First axis"
+              input(type: "text", name: "name", required: true, placeholder: "Taste")
+              small { "What to rank these items on." }
+            end
+            footer do
+              button(type: "submit", data_variant: "primary") { "Add axis" }
+            end
+          end
+
           ul(class: "card") do
             @list.items.each { |item| li { item.name } }
           end
