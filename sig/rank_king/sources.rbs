@@ -10,11 +10,20 @@ module RankKing
       def self.new: (key: String, name: String) -> instance
     end
 
-    # A synced source instance, for one list.
+    # A list's source.
     interface _Source
-      # The items currently in the source.
-      def entries: () -> Array[Entry]
+      # The text of the button that opens the sync dialog.
+      def label: () -> String
 
+      # What the sync dialog holds: a form that posts to the list's sync.
+      def form: (csrf: Method) -> _Component
+
+      # Applies what that form posted.
+      def sync: (Hash[String, untyped] params) -> void
+    end
+
+    # A source that fetches its items, as Sync.call needs it.
+    interface _Synced
       # Every item of the list, archived ones included, by the key its
       # entries carry.
       def items_by_key: () -> Hash[String, Item]
@@ -25,12 +34,14 @@ module RankKing
     end
 
     # A source kind: a class in Sources, named by a list's source_kind.
-    # A manual kind (Text) has no instance: its items are edited by hand.
     interface _SourceClass
-      def manual?: () -> bool
-      # The source for a list, configured from the kind's own table. Only
-      # kinds that sync define it.
+      # The source for a list, configured from the kind's own table.
       def for: (List list) -> _Source
+    end
+
+    # A view component, as a source's form is.
+    interface _Component
+      def call: () -> String
     end
   end
 end

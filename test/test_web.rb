@@ -133,35 +133,43 @@ class TestWeb < Minitest::Test
     assert_equal %w[Pizza Sushi], list.items.map(&:name)
   end
 
-  def test_add_item_to_text_list
+  def test_text_sync_dialog_lists_items_for_editing
     create_list(name: "Foods", items: "Pizza\nSushi")
     list = RankKing::List.first
-
-    csrf_post "/lists/#{list.id}/items", { name: "Tacos" }
-    assert last_response.redirect?
-    assert_equal %w[Pizza Sushi Tacos], list.items_dataset.order(:id).map(:name)
-  end
-
-  def test_archived_items_are_hidden
-    create_list(name: "Foods", items: "Pizza\nSushi", axes: "Taste")
-    list = RankKing::List.first
-    sushi = list.items.find { |i| i.name == "Sushi" }
-
-    csrf_post "/lists/#{list.id}/items/#{sushi.id}/archive"
-    assert last_response.redirect?
-    refute_nil sushi.reload.archived_at
+    pizza = list.items.find { |i| i.name == "Pizza" }
 
     get "/lists/#{list.id}"
-    assert_includes last_response.body, "Pizza"
+    assert_includes last_response.body, "Edit items"
+    assert_includes last_response.body, %(action="/lists/#{list.id}/sync")
+    assert_includes last_response.body, %(name="items[#{pizza.id}]" value="Pizza")
+  end
+
+  def test_text_sync_renames_archives_and_adds_by_id
+    create_list(name: "Foods", items: "Pizza\nSushi\nTacos", axes: "Taste")
+    list = RankKing::List.first
+    pizza, sushi, tacos = list.items_dataset.order(:id).all
+
+    csrf_post "/lists/#{list.id}/sync", {
+      "items" => { pizza.id.to_s => "Pizza Margherita", sushi.id.to_s => "  ", tacos.id.to_s => "Tacos" },
+      "new_items" => "Ramen\n\nCurry\n",
+    }
+    assert last_response.redirect?
+
+    assert_equal "Pizza Margherita", pizza.reload.name
+    refute_nil sushi.reload.archived_at
+    assert_nil tacos.reload.archived_at
+    assert_equal ["Pizza Margherita", "Tacos", "Ramen", "Curry"], list.items_dataset.order(:id).map(:name)
+
+    get "/lists/#{list.id}"
     refute_includes last_response.body, "Sushi"
   end
 
-  def test_text_lists_have_no_sync
+  def test_text_sync_leaves_items_it_was_not_sent
     create_list(name: "Foods", items: "Pizza\nSushi")
     list = RankKing::List.first
 
-    get "/lists/#{list.id}"
-    refute_includes last_response.body, "/lists/#{list.id}/sync"
+    csrf_post "/lists/#{list.id}/sync", { "new_items" => "Tacos" }
+    assert_equal %w[Pizza Sushi Tacos], list.items_dataset.order(:id).map(:name)
   end
 
   def test_record_result_rejects_archived_item

@@ -18,7 +18,6 @@ module RankKing
             div(class: "list-show") do
               h1 { @list.name }
               render_items
-              render_source
               render_axes
               render_matchup
               render_ratings
@@ -29,53 +28,26 @@ module RankKing
         private
 
         def render_items
-          manual = Sources.fetch(@list.source_kind).manual?
-
           section(class: "section") do
-            h2 { "Items" }
+            div(class: "section-header") do
+              h2 { "Items" }
+              render_sync
+            end
             ul(class: "item-list") do
               @list.items.each do |item|
-                li do
-                  plain item.name
-                  render_archive(item) if manual
-                end
+                li { item.name }
               end
             end
-            render_add_item if manual
           end
         end
 
-        def render_archive(item)
-          action = "/lists/#{@list.id}/items/#{item.id}/archive"
-          form(method: "post", action:, class: "inline") do
-            input(type: "hidden", name: "_csrf", value: @csrf.call(action))
-            button(type: "submit", class: "btn-link") { "Remove" }
-          end
-        end
-
-        def render_add_item
-          action = "/lists/#{@list.id}/items"
-          form(method: "post", action:, class: "form") do
-            input(type: "hidden", name: "_csrf", value: @csrf.call(action))
-            div(class: "field") do
-              label(for: "item-name") { "Add item" }
-              input(type: "text", name: "name", id: "item-name", required: true)
-            end
-            button(type: "submit", class: "btn-primary") { "Add" }
-          end
-        end
-
-        # Synced sources get a Sync button; manual ones are edited above.
-        def render_source
-          return if Sources.fetch(@list.source_kind).manual?
-
-          action = "/lists/#{@list.id}/sync"
-          section(class: "section") do
-            h2 { "Source" }
-            form(method: "post", action:, class: "form") do
-              input(type: "hidden", name: "_csrf", value: @csrf.call(action))
-              button(type: "submit", class: "btn-primary") { "Sync" }
-            end
+        # The source decides what syncing looks like: the button opens a
+        # dialog holding the source's own form.
+        def render_sync
+          source = @list.source
+          button(type: "button", class: "btn-link", commandfor: "sync-dialog", command: "show-modal") { source.label }
+          dialog(id: "sync-dialog", class: "dialog") do
+            render source.form(csrf: @csrf)
           end
         end
 

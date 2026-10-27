@@ -130,9 +130,28 @@ textarea {
   cursor: pointer;
 }
 
-form.inline {
-  display: inline;
-  margin-inline-start: var(--space-2xs);
+.section-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-s);
+}
+
+.dialog {
+  width: min(32rem, 100% - 2 * var(--space-s));
+  padding: var(--space-m);
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.dialog::backdrop {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: var(--space-s);
 }
 
 /* -------------------- */

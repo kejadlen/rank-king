@@ -8,6 +8,13 @@ module RankKing
       def call: () -> String
     end
 
+    module Sources
+      class Text
+        def initialize: (list: List, csrf: Method) -> void
+        def call: () -> String
+      end
+    end
+
     module ListViews
       class Show
         def initialize: (list: List, csrf: Method) -> void

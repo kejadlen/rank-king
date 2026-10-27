@@ -6,14 +6,14 @@ module RankKing
   # Reconciles a list's items with a fresh snapshot of entries from its
   # source. Items missing from the snapshot are archived rather than deleted
   # so their results survive, and come back with their history if they
-  # reappear.
+  # reappear. A kind that fetches its items calls this from its own sync.
   module Sync
     # Signed in sig/rank_king/sync.rbs: a Data class.
     # @rbs skip
     Summary = Data.define(:added, :restored, :archived)
 
-    #: (List list, Array[Sources::Entry] entries, ?source: Sources::_Source, ?now: Time) -> Summary
-    def self.call(list, entries, source: list.source, now: Time.now)
+    #: (List list, Array[Sources::Entry] entries, source: Sources::_Synced, ?now: Time) -> Summary
+    def self.call(list, entries, source:, now: Time.now)
       DB.transaction do
         existing = source.items_by_key
         added = restored = 0

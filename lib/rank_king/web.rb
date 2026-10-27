@@ -4,7 +4,6 @@ require "roda"
 
 require_relative "models"
 require_relative "proxy_auth"
-require_relative "sync"
 require_relative "views/home"
 require_relative "views/list/show"
 
@@ -63,39 +62,11 @@ module RankKing
             end
           end
 
+          # Submitted from the source's own sync dialog.
           r.on "sync" do
             r.post do
-              r.halt 422 if Sources.fetch(list.source_kind).manual?
-
-              source = list.source
-              Sync.call(list, source.entries, source:)
-
+              list.source.sync(r.params)
               r.redirect "/lists/#{list.id}"
-            end
-          end
-
-          # A manual source's items are edited one at a time, by id.
-          r.on "items" do
-            r.halt 422 unless Sources.fetch(list.source_kind).manual?
-
-            r.is do
-              r.post do
-                name = r.params["name"].to_s.strip
-                r.halt 422 if name.empty?
-
-                Item.create(list_id: list.id, name:)
-                r.redirect "/lists/#{list.id}"
-              end
-            end
-
-            r.on Integer, "archive" do |item_id|
-              r.post do
-                item = list.items_dataset.where(id: item_id).first
-                r.halt 404 unless item
-
-                item.update(archived_at: Time.now)
-                r.redirect "/lists/#{list.id}"
-              end
             end
           end
 
