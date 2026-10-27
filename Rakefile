@@ -1,4 +1,6 @@
-$LOAD_PATH.unshift File.expand_path("lib", __dir__)
+require "pathname"
+
+$LOAD_PATH.unshift Pathname(__dir__).join("lib").to_s
 
 require "minitest/test_task"
 
