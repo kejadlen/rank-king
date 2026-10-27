@@ -24,7 +24,7 @@ module RankKing
       user = User.for_login(ProxyAuth.login(r.env))
 
       r.root do
-        lists = List.where(user_id: [user.id, nil]).order(:id).all
+        lists = List.where(user_id: user.id).order(:id).all
         Views::Home.new(lists: lists, csrf: method(:csrf_token)).call
       end
 
@@ -55,9 +55,8 @@ module RankKing
         end
 
         r.on Integer do |list_id|
-          # Lists are private to their owner; ones from before users
-          # existed have none and stay visible to everyone.
-          @list = List.where(id: list_id, user_id: [user.id, nil]).first
+          # Lists are private to their owner.
+          @list = List.where(id: list_id, user_id: user.id).first
           r.halt 404 unless @list
 
           r.is do

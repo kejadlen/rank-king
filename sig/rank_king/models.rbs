@@ -9,8 +9,8 @@ module RankKing
   end
 
   class List < Sequel::Model
-    def user_id: () -> Integer?
-    def user: () -> User?
+    def user_id: () -> Integer
+    def user: () -> User
     def name: () -> String
     def items: () -> Array[Item]
     def axes: () -> Array[Axis]
