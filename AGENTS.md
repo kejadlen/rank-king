@@ -8,6 +8,7 @@ Rank King is a webapp for ranking items along multiple axes through pairwise com
 
 - Ruby 4, Roda (routing), Sequel (ORM), SQLite
 - Phlex for views (pure Ruby HTML)
+- Gloss (https://github.com/kejadlen/gloss) for the design system, vendored
 - Puma web server, Rack
 - Minitest for tests
 - Steep for type checking, against inline RBS comments
@@ -37,6 +38,9 @@ test/              — Minitest tests
 sig/               — RBS for what inline comments cannot express
 Steepfile          — type checking config
 public/            — static assets
+  vendor/gloss/    — vendored Gloss CSS and JS (refresh with rake gloss:vendor)
+  css/app.css      — Rank King's layout over Gloss
+  js/app.js        — axis tags and delete confirmation
 .github/workflows/ — CI, PR previews, preview reaper (GitHub Actions)
 Dockerfile         — production image
 fly.toml           — Fly config for the main demo and PR previews
@@ -59,6 +63,7 @@ fly.toml           — Fly config for the main demo and PR previews
 | Run tests | `bundle exec rake test` |
 | Type check | `bundle exec rake steep` |
 | Run dev server | `bundle exec rake dev` (uses `fd \| entr -r rackup demo.ru`) |
+| Refresh Gloss | `bundle exec rake gloss:vendor GLOSS=/path/to/gloss` |
 | Start server | `bundle exec rackup` (behind the proxy) or `bundle exec rackup demo.ru` (stub login) |
 
 ## CI and deployment
@@ -88,6 +93,17 @@ Tests set `DATABASE_URL=:memory:` in `test/test_helper.rb`.
 - Models use `Sequel::Model` with `timestamps` plugin
 - Views are Phlex components under `lib/rank_king/views/`
 - CSRF protection is on for all POST routes
+- Markup follows Gloss' contracts (`_components/<name>.md` in the Gloss
+  repo): bare elements, ARIA roles, and `data-*` variants, with no class
+  beyond Gloss' own. `app.css` reads only `--gl-*` tokens and lays
+  components out rather than restyling them.
+- Every screen opens with one header row (back, title, then the
+  screen's own actions). List actions go in the list's ⋯ menu and list
+  options in its settings form, so a new feature adds an entry there
+  rather than a new button or screen.
+- A list's source is fixed when it is made. `Sources::KINDS` lists the
+  kinds the new-list form offers, and each kind's `title` names it there
+  and in settings. Its sync dialog opens from the list's ⋯ menu.
 - Every request needs a `Remote-User` header or it gets a 401. That is safe only because a proxy (Tailscale identity) writes the header. `StubLogin` fills it in for `demo.ru` (dev server, Fly apps) and nowhere else: never in `config.ru`, and never in front of real data.
 - Lists are private to their owner (404 for anyone else)
 - Config is a frozen `Data.define` value object

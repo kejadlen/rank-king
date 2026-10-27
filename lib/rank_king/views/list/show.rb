@@ -8,133 +8,103 @@ module RankKing
   module Views
     module ListViews
       class Show < Phlex::HTML
-        def initialize(list:, csrf:)
+        def initialize(list:, csrf:, axis: nil)
           @list = list
           @csrf = csrf
+          @axes = list.axes
+          @selected = axis || @axes.first
         end
 
         def view_template
           render Layout.new(title: "#{@list.name} — Rank King") do
-            div(class: "list-show") do
-              h1 { @list.name }
+            render PageHeader.new(title: @list.name, back: "/", back_label: "Lists", size: "type-h2") do
+              render_menu
+            end
+
+            if @axes.empty?
               render_items
+            else
               render_axes
-              render_matchup
-              render_ratings
             end
           end
         end
 
         private
 
-        def render_items
-          section(class: "section") do
-            div(class: "section-header") do
-              h2 { "Items" }
-              render_sync
-            end
-            ul(class: "item-list") do
-              @list.items.each do |item|
-                li { item.name }
-              end
+        # Every list action lives here, so a new one is a new entry
+        # rather than a new button on the screen. The source decides what
+        # syncing looks like: its entry opens a dialog holding its own form.
+        def render_menu
+          source = @list.source
+
+          button(class: "icon-button", data_size: "lg", popovertarget: "list-actions", aria_label: "List actions",
+                 style: "--gl-icon: var(--rk-icon-more)")
+          nav(id: "list-actions", popover: true, aria_label: "List actions") do
+            ul(class: "card") do
+              li { button(type: "button", commandfor: "sync-dialog", command: "show-modal") { source.label } }
+              li { a(href: "/lists/#{@list.id}/settings") { "Settings" } }
             end
           end
+          dialog(id: "sync-dialog") { render source.form(csrf: @csrf) }
         end
 
-        # The source decides what syncing looks like: the button opens a
-        # dialog holding the source's own form.
-        def render_sync
-          source = @list.source
-          button(type: "button", class: "btn-link", commandfor: "sync-dialog", command: "show-modal") { source.label }
-          dialog(id: "sync-dialog", class: "dialog") do
-            render source.form(csrf: @csrf)
+        # Nothing to compare on yet. The "+ Axis" slot stands where the
+        # axis tabs will, and Enter makes the first one.
+        def render_items
+          action = "/lists/#{@list.id}/axes"
+          form(method: "post", action: action, data_first_axis: true) do
+            input(type: "hidden", name: "_csrf", value: @csrf.call(action))
+            span(class: "tag", data_dashed: true) do
+              input(type: "text", name: "name", required: true, placeholder: "+ Axis", aria_label: "New axis")
+            end
+          end
+
+          ul(class: "card") do
+            @list.items.each { |item| li { item.name } }
           end
         end
 
         def render_axes
-          section(class: "section") do
-            h2 { "Axes" }
-            if @list.axes.empty?
-              p(class: "empty") { "No axes defined." }
-            else
-              ul(class: "axis-list") do
-                @list.axes.each do |axis|
-                  li { axis.name }
-                end
+          div(data_tabs: true) do
+            div(role: "tablist", aria_label: "Axes") do
+              @axes.each do |axis|
+                selected = axis.id == @selected.id
+                button(role: "tab", id: "axis-#{axis.id}-tab", aria_controls: "axis-#{axis.id}",
+                       aria_selected: selected.to_s, tabindex: selected ? 0 : -1) { axis.name }
+              end
+            end
+
+            @axes.each do |axis|
+              div(role: "tabpanel", id: "axis-#{axis.id}", aria_labelledby: "axis-#{axis.id}-tab",
+                  hidden: axis.id != @selected.id) do
+                render_ranking(axis)
               end
             end
           end
         end
 
-        def render_matchup
-          return if @list.axes.empty? || @list.items.size < 2
+        def render_ranking(axis)
+          ranked, unranked = axis.ranking
 
-          items = @list.items.to_a
-          pair = items.sample(2)
-          axis = @list.axes.to_a.sample
-
-          section(class: "section") do
-            h2 { "Matchup" }
-            p(class: "matchup-axis") { "On: #{axis.name}" }
-            div(class: "matchup") do
-              form(method: "post", action: "/lists/#{@list.id}/results", class: "matchup-choice") do
-                input(type: "hidden", name: "_csrf", value: @csrf.call("/lists/#{@list.id}/results"))
-                input(type: "hidden", name: "axis_id", value: axis.id)
-                input(type: "hidden", name: "winner_id", value: pair[0].id)
-                input(type: "hidden", name: "loser_id", value: pair[1].id)
-                button(type: "submit", class: "btn-choice") { pair[0].name }
+          ol(class: "card") do
+            ranked.each.with_index(1) do |item, rank|
+              li do
+                span(class: "type-label") { format("%02d", rank) }
+                plain item.name
               end
-
-              span(class: "matchup-vs") { "vs" }
-
-              form(method: "post", action: "/lists/#{@list.id}/results", class: "matchup-choice") do
-                input(type: "hidden", name: "_csrf", value: @csrf.call("/lists/#{@list.id}/results"))
-                input(type: "hidden", name: "axis_id", value: axis.id)
-                input(type: "hidden", name: "winner_id", value: pair[1].id)
-                input(type: "hidden", name: "loser_id", value: pair[0].id)
-                button(type: "submit", class: "btn-choice") { pair[1].name }
+            end
+            unranked.each do |item|
+              li do
+                span(class: "type-label") { "—" }
+                plain item.name
+                span(class: "type-label") { "Unranked" }
               end
             end
           end
-        end
 
-        def render_ratings
-          return if @list.axes.empty?
-
-          section(class: "section") do
-            h2 { "Ratings" }
-            @list.axes.each do |axis|
-              render_axis_ratings(axis)
-            end
+          a(href: "/lists/#{@list.id}/axes/#{axis.id}/compare", class: "btn", data_variant: "primary") do
+            "Compare on #{axis.name}"
           end
-        end
-
-        def render_axis_ratings(axis)
-          results = axis.results
-          return if results.empty?
-
-          ratings = compute_ratings(axis)
-
-          div(class: "axis-ratings") do
-            h3 { axis.name }
-            ol(class: "rating-list") do
-              ratings.each do |item, rating|
-                li { "#{item.name} — #{format("%.0f", rating)}" }
-              end
-            end
-          end
-        end
-
-        def compute_ratings(axis)
-          # Placeholder: simple win count until openskill is added
-          wins = Hash.new(0)
-          axis.results.each { |r| wins[r.winner_id] += 1 }
-
-          items_by_id = @list.items.to_h { |i| [i.id, i] }
-          wins
-            .sort_by { |_, count| -count }
-            .map { |id, count| [items_by_id[id], count] }
-            .select { |item, _| item }
         end
       end
     end

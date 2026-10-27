@@ -37,6 +37,9 @@ module RankKing
     interface _SourceClass
       # The source for a list, configured from the kind's own table.
       def for: (List list) -> _Source
+
+      # What the kind is called where a list's source is chosen or shown.
+      def title: () -> String
     end
 
     # A view component, as a source's form is.

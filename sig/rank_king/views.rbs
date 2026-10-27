@@ -4,7 +4,7 @@
 module RankKing
   module Views
     class Home
-      def initialize: (lists: Array[List], csrf: Method) -> void
+      def initialize: (lists: Array[List]) -> void
       def call: () -> String
     end
 
@@ -16,8 +16,23 @@ module RankKing
     end
 
     module ListViews
+      class New
+        def initialize: (sources: Hash[String, String], csrf: Method) -> void
+        def call: () -> String
+      end
+
       class Show
-        def initialize: (list: List, csrf: Method) -> void
+        def initialize: (list: List, csrf: Method, ?axis: Axis?) -> void
+        def call: () -> String
+      end
+
+      class Compare
+        def initialize: (list: List, axis: Axis, csrf: Method) -> void
+        def call: () -> String
+      end
+
+      class Settings
+        def initialize: (list: List, source: String, csrf: Method) -> void
         def call: () -> String
       end
     end
