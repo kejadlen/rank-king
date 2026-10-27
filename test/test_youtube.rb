@@ -20,11 +20,12 @@ class TestYouTube < Minitest::Test
   # at a time, so fetching it has to follow nextPageToken.
   class FakeGoogle
     attr_reader :calls
-    attr_accessor :videos, :error
+    attr_accessor :videos, :playlists, :error
 
     def initialize
       @calls = []
       @videos = []
+      @playlists = [["PLabc123", "Music"], ["PLdef456", "Talks"]]
     end
 
     def call(method, url, params, access_token)
@@ -38,6 +39,8 @@ class TestYouTube < Minitest::Test
         else
           { "access_token" => "access-#{params[:refresh_token]}" }
         end
+      when RankKing::Google::PLAYLISTS_URL
+        { "items" => playlists.map { |id, title| { "id" => id, "snippet" => { "title" => title } } } }
       when RankKing::Google::PLAYLIST_ITEMS_URL
         page = params[:pageToken].to_i
         body = { "items" => videos[page * 2, 2].to_a.map { |id, title| item(id, title) } }
@@ -146,17 +149,40 @@ class TestYouTube < Minitest::Test
     refute_includes last_response.body, %(name="playlist")
   end
 
-  def test_new_list_takes_a_playlist_once_connected
+  def test_new_list_offers_the_users_playlists
     connect_google
     get "/lists/new"
-    assert_includes last_response.body, %(name="playlist")
+    assert_includes last_response.body, %(<select name="playlist" required>)
+    assert_includes last_response.body, %(<option value="PLabc123">Music</option>)
+    assert_includes last_response.body, %(<option value="PLdef456">Talks</option>)
+
+    _, url, params, access_token = @google.calls.last
+    assert_equal RankKing::Google::PLAYLISTS_URL, url
+    assert_equal "true", params[:mine]
+    assert_equal "access-refresh-the-code", access_token
+  end
+
+  def test_new_list_says_when_there_are_no_playlists
+    connect_google
+    @google.playlists = []
+    get "/lists/new"
+    assert_includes last_response.body, "no playlists yet"
+  end
+
+  def test_new_list_still_works_when_google_fails
+    connect_google
+    @google.error = "Token has been expired or revoked."
+    get "/lists/new"
+    assert last_response.ok?
+    assert_includes last_response.body, "Token has been expired or revoked."
+    assert_includes last_response.body, %(name="items")
   end
 
   def test_create_a_list_from_a_playlist
     connect_google
     @google.videos = [["v1", "First"], ["v2", nil], ["v3", "Third"], ["v4", "Fourth"], ["v1", "First again"]]
 
-    create_list(playlist: "https://www.youtube.com/playlist?list=#{PLAYLIST}&si=x")
+    create_list(playlist: PLAYLIST)
     assert last_response.redirect?
 
     list = RankKing::List.first
@@ -239,14 +265,6 @@ class TestYouTube < Minitest::Test
     assert last_response.redirect?
     assert_equal 0, RankKing::DB[:youtube_playlist_sources].count
     assert_equal 0, RankKing::DB[:youtube_playlist_items].count
-  end
-
-  def test_playlist_id
-    playlist_id = RankKing::Sources::YouTubePlaylist.method(:playlist_id)
-    assert_equal PLAYLIST, playlist_id.(" #{PLAYLIST} ")
-    assert_equal PLAYLIST, playlist_id.("https://www.youtube.com/playlist?list=#{PLAYLIST}")
-    assert_equal PLAYLIST, playlist_id.("https://www.youtube.com/watch?v=abc&list=#{PLAYLIST}&index=2")
-    assert_nil playlist_id.("https://www.youtube.com/watch?v=abc")
   end
 
   private

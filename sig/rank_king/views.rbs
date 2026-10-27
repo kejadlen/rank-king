@@ -30,7 +30,7 @@ module RankKing
       end
 
       class YouTubePlaylistFields
-        def initialize: (connected: bool, configured: bool) -> void
+        def initialize: (playlists: Array[[String, String]]?, configured: bool, ?error: String?) -> void
         def call: () -> String
       end
     end

@@ -15,6 +15,7 @@ module RankKing
 
     AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
     TOKEN_URL = "https://oauth2.googleapis.com/token"
+    PLAYLISTS_URL = "https://www.googleapis.com/youtube/v3/playlists"
     PLAYLIST_ITEMS_URL = "https://www.googleapis.com/youtube/v3/playlistItems"
     SCOPE = "https://www.googleapis.com/auth/youtube.readonly"
 
@@ -55,30 +56,44 @@ module RankKing
       body.fetch("access_token") { raise Error, "Google sent no access token" }
     end
 
+    # The user's own playlists, as [playlist id, title]. YouTube leaves
+    # out Watch Later and Liked videos.
+    #: (String access_token) -> Array[[String, String]]
+    def self.playlists(access_token)
+      pages(access_token, PLAYLISTS_URL, { part: "snippet", mine: "true" }).map do |item|
+        [item.fetch("id"), item.dig("snippet", "title").to_s] #: [String, String]
+      end
+    end
+
     # The videos in a playlist, in playlist order, as [video id, title].
     # Deleted videos, and private ones the user cannot see, carry no
     # owner and are left out.
     #: (String access_token, String playlist_id) -> Array[[String, String]]
     def self.playlist_videos(access_token, playlist_id)
-      videos = [] #: Array[[String, String]]
+      items = pages(access_token, PLAYLIST_ITEMS_URL, { part: "snippet", playlistId: playlist_id })
+      items.filter_map do |item|
+        snippet = item.fetch("snippet")
+        next unless snippet["videoOwnerChannelTitle"]
+
+        [snippet.dig("resourceId", "videoId"), snippet.fetch("title")] #: [String, String]
+      end
+    end
+
+    # Every item of a YouTube list endpoint, following its pages.
+    #: (String access_token, String url, Hash[Symbol, String] query) -> Array[Hash[String, untyped]]
+    def self.pages(access_token, url, query)
+      items = [] #: Array[Hash[String, untyped]]
       page = nil #: String?
       loop do
-        query = { part: "snippet", playlistId: playlist_id, maxResults: "50" } #: Hash[Symbol, String]
-        query[:pageToken] = page if page
-        body = transport.call(:get, PLAYLIST_ITEMS_URL, query, access_token)
+        params = { **query, maxResults: "50" } #: Hash[Symbol, String]
+        params[:pageToken] = page if page
+        body = transport.call(:get, url, params, access_token)
 
-        items = body["items"] || [] #: Array[Hash[String, untyped]]
-        items.each do |item|
-          snippet = item.fetch("snippet")
-          next unless snippet["videoOwnerChannelTitle"]
-
-          videos << [snippet.dig("resourceId", "videoId"), snippet.fetch("title")]
-        end
-
+        items.concat(body["items"] || [])
         page = body["nextPageToken"]
         break unless page
       end
-      videos
+      items
     end
 
     #: () -> Hash[Symbol, String]

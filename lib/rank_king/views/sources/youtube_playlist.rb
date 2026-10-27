@@ -5,21 +5,28 @@ require "phlex"
 module RankKing
   module Views
     module Sources
-      # The YouTube playlist source's fields on the new-list form: the
-      # playlist to follow, once the user has connected Google.
+      # The YouTube playlist source's fields on the new-list form: a choice
+      # of the user's playlists, once they have connected Google. playlists
+      # is nil until then.
       class YouTubePlaylistFields < Phlex::HTML
-        def initialize(connected:, configured:)
-          @connected = connected
+        def initialize(playlists:, configured:, error: nil)
+          @playlists = playlists
           @configured = configured
+          @error = error
         end
 
         def view_template
-          if @connected
+          if @error
+            p { "Google would not list your playlists: #{@error}" }
+          elsif @playlists&.empty?
+            p { "Your YouTube account has no playlists yet." }
+          elsif @playlists
             label(class: "field") do
               plain "Playlist"
-              input(type: "text", name: "playlist", required: true,
-                    placeholder: "https://www.youtube.com/playlist?list=…")
-              small { "Its URL or ID. Private playlists work too." }
+              select(name: "playlist", required: true) do
+                @playlists.each { |id, title| option(value: id) { title } }
+              end
+              small { "Private playlists are listed too. YouTube does not share Watch Later." }
             end
           elsif @configured
             p do

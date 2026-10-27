@@ -21,22 +21,22 @@ module RankKing
       #: (List list) -> YouTubePlaylist
       def self.for(list) = new(list)
 
+      # A choice of the user's playlists, fetched as the form is drawn. A
+      # Google error says so in place of the choice rather than failing
+      # the whole form.
       #: (User user) -> _Component
       def self.fields(user)
-        Views::Sources::YouTubePlaylistFields.new(connected: !user.google_account.nil?, configured: Google.configured?)
+        account = user.google_account
+        playlists = account && Google.playlists(Google.access_token(account.refresh_token))
+        Views::Sources::YouTubePlaylistFields.new(playlists:, configured: Google.configured?)
+      rescue Google::Error => e
+        Views::Sources::YouTubePlaylistFields.new(playlists: nil, configured: true, error: e.message)
       end
 
-      # A playlist's id, from its URL or as pasted on its own.
-      #: (String text) -> String?
-      def self.playlist_id(text)
-        text = text.strip
-        text[/[?&]list=([\w-]+)/, 1] || text[/\A[\w-]+\z/]
-      end
-
-      # Follows the playlist from the new-list form and fetches it.
+      # Follows the playlist chosen on the new-list form and fetches it.
       #: (List list, Hash[String, untyped] params) -> bool
       def self.create(list, params)
-        playlist_id = playlist_id(params["playlist"].to_s)
+        playlist_id = params["playlist"].to_s[/\A[\w-]+\z/]
         return false unless playlist_id && list.user.google_account
 
         DB[TABLE].insert(list_id: list.id, playlist_id:)
