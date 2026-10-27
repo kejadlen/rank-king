@@ -12,21 +12,22 @@ module RankKing
     # @rbs skip
     Summary = Data.define(:added, :restored, :archived)
 
-    #: (List list, Array[Sources::Entry] entries, ?now: Time) -> Summary
-    def self.call(list, entries, now: Time.now)
+    #: (List list, Array[Sources::Entry] entries, ?source: Sources::_Source, ?now: Time) -> Summary
+    def self.call(list, entries, source: list.source, now: Time.now)
       DB.transaction do
-        existing = Item.where(list_id: list.id).exclude(external_id: nil).to_hash(:external_id)
+        existing = source.items_by_key
         added = restored = 0
 
         entries.each do |entry|
           attrs = { name: entry.name, url: entry.url, archived_at: nil }
-          if (item = existing.delete(entry.external_id))
+          if (item = existing.delete(entry.key))
             restored += 1 if item.archived_at
             item.update(**attrs)
           else
-            Item.create(**attrs, list_id: list.id, external_id: entry.external_id)
+            item = Item.create(**attrs, list_id: list.id)
             added += 1
           end
+          source.saved(item, entry)
         end
 
         gone = existing.values.select {|item| item.archived_at.nil? }

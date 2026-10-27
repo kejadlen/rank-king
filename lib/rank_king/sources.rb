@@ -3,12 +3,11 @@
 module RankKing
   module Sources
     # What every source produces: one entry per item currently in the source.
-    # external_id is how sync recognizes the same item across snapshots.
-    # Only what any source has goes here; a kind's own item details belong
-    # in its own table.
+    # key is how the source recognizes the same item across syncs (see
+    # items_by_key); name and url are the item fields any source has.
     # Signed in sig/rank_king/sources.rbs: a Data class.
     # @rbs skip
-    Entry = Data.define(:external_id, :name, :url)
+    Entry = Data.define(:key, :name, :url)
   end
 end
 

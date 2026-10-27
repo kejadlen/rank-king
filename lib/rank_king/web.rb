@@ -35,15 +35,15 @@ module RankKing
             name = r.params["name"].to_s.strip
             r.halt 422 if name.empty?
 
-            entries = Sources::Text.new.entries(r.params["items"])
-            r.halt 422 if entries.size < 2
+            item_names = r.params["items"].to_s.lines.map(&:strip).reject(&:empty?)
+            r.halt 422 if item_names.size < 2
 
             axes_text = r.params["axes"].to_s.strip
             axis_names = axes_text.lines.map(&:strip).reject(&:empty?)
 
             list = DB.transaction do
               l = List.create(name: name, user_id: user.id, source_kind: "Text")
-              Sync.call(l, entries)
+              item_names.each { |n| Item.create(list_id: l.id, name: n) }
               axis_names.each { |n| Axis.create(list_id: l.id, name: n) }
               l
             end
@@ -65,9 +65,37 @@ module RankKing
 
           r.on "sync" do
             r.post do
-              Sync.call(list, list.source.entries(r.params["snapshot"]))
+              r.halt 422 if Sources.fetch(list.source_kind).manual?
+
+              source = list.source
+              Sync.call(list, source.entries, source:)
 
               r.redirect "/lists/#{list.id}"
+            end
+          end
+
+          # A manual source's items are edited one at a time, by id.
+          r.on "items" do
+            r.halt 422 unless Sources.fetch(list.source_kind).manual?
+
+            r.is do
+              r.post do
+                name = r.params["name"].to_s.strip
+                r.halt 422 if name.empty?
+
+                Item.create(list_id: list.id, name:)
+                r.redirect "/lists/#{list.id}"
+              end
+            end
+
+            r.on Integer, "archive" do |item_id|
+              r.post do
+                item = list.items_dataset.where(id: item_id).first
+                r.halt 404 unless item
+
+                item.update(archived_at: Time.now)
+                r.redirect "/lists/#{list.id}"
+              end
             end
           end
 

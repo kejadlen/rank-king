@@ -4,23 +4,33 @@
 module RankKing
   module Sources
     class Entry
-      attr_reader external_id: String
+      attr_reader key: String
       attr_reader name: String
       attr_reader url: String?
 
-      def self.new: (external_id: String, name: String, url: String?) -> instance
+      def self.new: (key: String, name: String, url: String?) -> instance
     end
 
-    # A source instance: turns a snapshot (the pasted text for a push
-    # source, ignored by a pull source) into entries.
+    # A synced source instance, for one list.
     interface _Source
-      def entries: (untyped snapshot) -> Array[Entry]
+      # The items currently in the source.
+      def entries: () -> Array[Entry]
+
+      # Every item of the list, archived ones included, by the key its
+      # entries carry.
+      def items_by_key: () -> Hash[String, Item]
+
+      # Called by sync for each entry once its item is saved, to keep
+      # whatever the kind knows about the item in its own table.
+      def saved: (Item item, Entry entry) -> void
     end
 
     # A source kind: a class in Sources, named by a list's source_kind.
+    # A manual kind (Text) has no instance: its items are edited by hand.
     interface _SourceClass
-      def push?: () -> bool
-      # The source for a list, configured from the kind's own table.
+      def manual?: () -> bool
+      # The source for a list, configured from the kind's own table. Only
+      # kinds that sync define it.
       def for: (List list) -> _Source
     end
   end

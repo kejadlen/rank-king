@@ -11,23 +11,17 @@ Sequel.migration do
       add_column :synced_at, DateTime
     end
 
+    # Items keep only what any source has. How a kind recognizes its items
+    # across syncs, and anything else it knows about them, lives in its own
+    # table keyed by item_id; Text recognizes items by name.
     alter_table(:items) do
-      add_column :external_id, String
       add_column :url, String
       add_column :archived_at, DateTime
-      add_index [:list_id, :external_id], unique: true
     end
-
-    # A text item's external id is its name. Duplicate names keep a nil
-    # external_id and are left alone by sync.
-    first_ids = from(:items).group(:list_id, :name).select { min(:id) }
-    from(:items).where(id: first_ids).update(external_id: :name)
   end
 
   down do
     alter_table(:items) do
-      drop_index [:list_id, :external_id]
-      drop_column :external_id
       drop_column :url
       drop_column :archived_at
     end

@@ -119,6 +119,22 @@ textarea {
   background: #333;
 }
 
+.btn-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #666;
+  font: inherit;
+  font-size: 0.875em;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+form.inline {
+  display: inline;
+  margin-inline-start: var(--space-2xs);
+}
+
 /* -------------------- */
 /* Matchup */
 /* -------------------- */

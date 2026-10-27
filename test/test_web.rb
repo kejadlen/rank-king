@@ -130,28 +130,45 @@ class TestWeb < Minitest::Test
     list = RankKing::List.first
 
     assert_equal "Text", list.source_kind
-    assert_equal %w[Pizza Sushi], list.items.map(&:external_id)
+    assert_equal %w[Pizza Sushi], list.items.map(&:name)
   end
 
-  def test_sync_adds_and_hides_items
-    create_list(name: "Foods", items: "Pizza\nSushi", axes: "Taste")
+  def test_add_item_to_text_list
+    create_list(name: "Foods", items: "Pizza\nSushi")
     list = RankKing::List.first
 
-    csrf_post "/lists/#{list.id}/sync", { snapshot: "Pizza\nTacos" }
+    csrf_post "/lists/#{list.id}/items", { name: "Tacos" }
     assert last_response.redirect?
+    assert_equal %w[Pizza Sushi Tacos], list.items_dataset.order(:id).map(:name)
+  end
 
-    assert_equal %w[Pizza Tacos], list.items_dataset.order(:id).map(:name)
+  def test_archived_items_are_hidden
+    create_list(name: "Foods", items: "Pizza\nSushi", axes: "Taste")
+    list = RankKing::List.first
+    sushi = list.items.find { |i| i.name == "Sushi" }
+
+    csrf_post "/lists/#{list.id}/items/#{sushi.id}/archive"
+    assert last_response.redirect?
+    refute_nil sushi.reload.archived_at
 
     get "/lists/#{list.id}"
-    assert_includes last_response.body, "Tacos"
+    assert_includes last_response.body, "Pizza"
     refute_includes last_response.body, "Sushi"
+  end
+
+  def test_text_lists_have_no_sync
+    create_list(name: "Foods", items: "Pizza\nSushi")
+    list = RankKing::List.first
+
+    get "/lists/#{list.id}"
+    refute_includes last_response.body, "/lists/#{list.id}/sync"
   end
 
   def test_record_result_rejects_archived_item
     create_list(name: "Foods", items: "Pizza\nSushi\nTacos", axes: "Taste")
     list = RankKing::List.first
     sushi = list.items.find { |i| i.name == "Sushi" }
-    RankKing::Sync.call(list, RankKing::Sources::Text.new.entries("Pizza\nTacos"))
+    sushi.update(archived_at: Time.now)
 
     csrf_post "/lists/#{list.id}/results", {
       axis_id: list.axes.first.id,
