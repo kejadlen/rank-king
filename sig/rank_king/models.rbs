@@ -5,7 +5,6 @@ module RankKing
   class User < Sequel::Model
     def login: () -> String
     def lists: () -> Array[List]
-    def self.for_login: (String login) -> User
   end
 
   class List < Sequel::Model

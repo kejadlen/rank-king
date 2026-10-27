@@ -9,8 +9,6 @@ module RankKing
   # @rbs skip
   class User < Sequel::Model(DB[:users])
     one_to_many :lists, class: "RankKing::List"
-
-    def self.for_login(login) = find_or_create(login:)
   end
 
   # @rbs skip

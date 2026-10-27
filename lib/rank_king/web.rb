@@ -21,7 +21,7 @@ module RankKing
 
     route do |r|
       check_csrf!
-      user = User.for_login(ProxyAuth.login(r.env))
+      user = User.find_or_create(login: ProxyAuth.login(r.env))
 
       r.root do
         lists = List.where(user_id: [user.id, nil]).order(:id).all
