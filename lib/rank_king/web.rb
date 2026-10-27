@@ -24,7 +24,7 @@ module RankKing
       user = User.find_or_create(login: ProxyAuth.login(r.env))
 
       r.root do
-        lists = List.where(user_id: [user.id, nil]).order(:id).all
+        lists = user.lists_dataset.order(:id).all
         Views::Home.new(lists: lists, csrf: method(:csrf_token)).call
       end
 
@@ -55,14 +55,13 @@ module RankKing
         end
 
         r.on Integer do |list_id|
-          # Lists are private to their owner; ones from before users
-          # existed have none and stay visible to everyone.
-          @list = List.where(id: list_id, user_id: [user.id, nil]).first
-          r.halt 404 unless @list
+          # Lists are private to their owner.
+          list = user.lists_dataset.where(id: list_id).first
+          r.halt 404 unless list
 
           r.is do
             r.get do
-              Views::ListViews::Show.new(list: @list, csrf: method(:csrf_token)).call
+              Views::ListViews::Show.new(list: list, csrf: method(:csrf_token)).call
             end
           end
 
@@ -72,17 +71,17 @@ module RankKing
               winner_id = r.params["winner_id"].to_i
               loser_id = r.params["loser_id"].to_i
 
-              axis = @list.axes_dataset.where(id: axis_id).first
+              axis = list.axes_dataset.where(id: axis_id).first
               r.halt 422 unless axis
 
-              winner = @list.items_dataset.where(id: winner_id).first
-              loser = @list.items_dataset.where(id: loser_id).first
+              winner = list.items_dataset.where(id: winner_id).first
+              loser = list.items_dataset.where(id: loser_id).first
               r.halt 422 unless winner && loser
               r.halt 422 if winner.id == loser.id
 
               Result.create(axis_id: axis.id, winner_id: winner.id, loser_id: loser.id)
 
-              r.redirect "/lists/#{@list.id}"
+              r.redirect "/lists/#{list.id}"
             end
           end
         end
