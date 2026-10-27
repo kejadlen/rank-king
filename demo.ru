@@ -4,9 +4,11 @@
 # write it. The dev server and the Fly apps serve from here; a deployment
 # behind the proxy runs config.ru alone.
 
-$LOAD_PATH.unshift(File.expand_path("lib", __dir__))
+require "pathname"
+
+$LOAD_PATH.unshift(Pathname(__dir__).join("lib").to_s)
 
 require "rank_king/stub_login"
 
 use RankKing::StubLogin
-run Rack::Builder.parse_file(File.expand_path("config.ru", __dir__))
+run Rack::Builder.parse_file(Pathname(__dir__).join("config.ru").to_s)

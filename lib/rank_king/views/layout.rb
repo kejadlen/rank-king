@@ -1,20 +1,22 @@
 # frozen_string_literal: true
 
 require "digest"
+require "pathname"
 require "phlex"
 
 module RankKing
   module Views
     class Layout < Phlex::HTML
       ASSET_VERSIONS = begin
-        root = File.expand_path("../../../public", __dir__)
+        root = Pathname(__dir__).join("../../../public").expand_path
         %w[
           /css/reset.css
           /css/utopia.css
           /css/app.css
         ].to_h {|path|
-          file = File.join(root, path)
-          [path, File.exist?(file) ? Digest::MD5.file(file).hexdigest[0, 10] : "0"]
+          # Pathname#join would treat the leading slash as a new root.
+          file = root.join(path.delete_prefix("/"))
+          [path, file.exist? ? Digest::MD5.file(file).hexdigest[0, 10] : "0"]
         }.freeze
       end
 

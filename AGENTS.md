@@ -88,8 +88,12 @@ Tests set `DATABASE_URL=:memory:` in `test/test_helper.rb`.
 - Views are Phlex components under `lib/rank_king/views/`
 - CSRF protection is on for all POST routes
 - Every request needs a `Remote-User` header or it gets a 401. That is safe only because a proxy (Tailscale identity) writes the header. `StubLogin` fills it in for `demo.ru` (dev server, Fly apps) and nowhere else: never in `config.ru`, and never in front of real data.
-- Lists are private to their owner (404 for anyone else); lists from before users existed have no owner and are visible to everyone
+- Lists are private to their owner (404 for anyone else)
 - Config is a frozen `Data.define` value object
+- Paths are `Pathname`s, not strings built with `File`/`Dir`
+  (`Pathname(__dir__).join(...)`, `#exist?`, `#read`). Convert with
+  `to_s` only at a boundary that wants a String, such as `$LOAD_PATH`,
+  `Rack::Builder.parse_file`, or `Sequel::Migrator.run`.
 - Types are inline RBS comments (`#:` before a method, `# @rbs` for the
   rest), checked by `rake steep`. `sig/` holds only what that syntax
   cannot say, each file saying why: gems with no signatures (Sequel,
