@@ -25,11 +25,16 @@ module Sequel
   class Dataset[out T]
     def where: (*untyped conditions) -> Dataset[T]
 
+    def exclude: (*untyped conditions) -> Dataset[T]
+
+    # Rows keyed by one column's value.
+    def to_hash: (Symbol key) -> Hash[untyped, T]
+
     def first: () -> T?
   end
 
   class Model
-    def self.plugin: (Symbol name, **untyped options) -> void
+    def self.plugin: (Symbol name, *untyped args, **untyped options) -> void
 
     def self.one_to_many: (Symbol name, **untyped options) -> void
 
@@ -39,10 +44,15 @@ module Sequel
 
     def self.all: () -> Array[instance]
 
+    def self.where: (*untyped conditions) -> Dataset[instance]
+
     # The row with this primary key, or nil.
     def self.[]: (untyped id) -> instance?
 
     def id: () -> Integer
+
+    # Sets the columns given and saves the row.
+    def update: (**untyped values) -> self
   end
 
   # Applies the migrations in a directory that the database has not run

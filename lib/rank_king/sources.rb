@@ -4,11 +4,9 @@ module RankKing
   module Sources
     # What every source produces: one entry per item currently in the source.
     # external_id is how sync recognizes the same item across snapshots.
-    Entry = Data.define(:external_id, :name, :url, :metadata) do
-      def initialize(external_id:, name:, url: nil, metadata: {})
-        super
-      end
-    end
+    # Signed in sig/rank_king/sources.rbs: a Data class.
+    # @rbs skip
+    Entry = Data.define(:external_id, :name, :url, :metadata)
   end
 end
 
@@ -18,8 +16,9 @@ module RankKing
   module Sources
     ALL = {
       Text.kind => Text,
-    }.freeze
+    }.freeze #: Hash[String, _SourceClass]
 
+    #: (String kind) -> _SourceClass
     def self.fetch(kind) = ALL.fetch(kind)
   end
 end

@@ -8,12 +8,22 @@ module RankKing
     def axes: () -> Array[Axis]
     def items_dataset: () -> Sequel::Dataset[Item]
     def axes_dataset: () -> Sequel::Dataset[Axis]
+    def source_kind: () -> String
+    def source_config: () -> Hash[String, untyped]
+    def source_config=: (Hash[String, untyped] value) -> void
+    def synced_at: () -> Time?
+    def source: () -> Sources::_Source
   end
 
   class Item < Sequel::Model
     def name: () -> String
     def list_id: () -> Integer
     def list: () -> List
+    def external_id: () -> String?
+    def url: () -> String?
+    def metadata: () -> Hash[String, untyped]
+    def metadata=: (Hash[String, untyped] value) -> void
+    def archived_at: () -> Time?
   end
 
   class Axis < Sequel::Model

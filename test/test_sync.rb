@@ -47,7 +47,7 @@ class TestSync < Minitest::Test
   end
 
   def test_refreshes_name_url_and_metadata
-    Sync.call(@list, [Sources::Entry.new(external_id: "v1", name: "Old")])
+    Sync.call(@list, [Sources::Entry.new(external_id: "v1", name: "Old", url: nil, metadata: {})])
     Sync.call(@list, [Sources::Entry.new(external_id: "v1", name: "New", url: "https://example.com/v1", metadata: { "thumb" => "t.jpg" })])
 
     item = Item.first(external_id: "v1")

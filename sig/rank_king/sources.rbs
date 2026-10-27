@@ -1,0 +1,28 @@
+# Entry is a Data class, whose members the inline parser cannot read, and
+# the interfaces every source kind meets are named here so Sources::ALL
+# and List#source can be typed by them.
+module RankKing
+  module Sources
+    class Entry
+      attr_reader external_id: String
+      attr_reader name: String
+      attr_reader url: String?
+      attr_reader metadata: Hash[String, untyped]
+
+      def self.new: (external_id: String, name: String, url: String?, metadata: Hash[String, untyped]) -> instance
+    end
+
+    # A source instance: turns a snapshot (the pasted text for a push
+    # source, ignored by a pull source) into entries.
+    interface _Source
+      def entries: (untyped snapshot) -> Array[Entry]
+    end
+
+    # A source kind, the class registered in Sources::ALL.
+    interface _SourceClass
+      def kind: () -> String
+      def push?: () -> bool
+      def new: (Hash[String, untyped] config) -> _Source
+    end
+  end
+end
