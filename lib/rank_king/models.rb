@@ -7,7 +7,13 @@ Sequel::Model.plugin :timestamps, update_on_create: true
 module RankKing
   # Signed in sig/rank_king/models.rbs: the superclass is not a constant.
   # @rbs skip
+  class User < Sequel::Model(DB[:users])
+    one_to_many :lists, class: "RankKing::List"
+  end
+
+  # @rbs skip
   class List < Sequel::Model(DB[:lists])
+    many_to_one :user, class: "RankKing::User"
     one_to_many :items, class: "RankKing::Item"
     one_to_many :axes, class: "RankKing::Axis"
   end
