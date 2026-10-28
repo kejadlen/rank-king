@@ -39,7 +39,7 @@ module RankKing
               # Each source's own fields. Only the chosen source's are
               # enabled, so only they are checked and posted; app.js
               # switches them when the dropdown changes.
-              @sources.each_with_index do |(kind, _title, fields), index|
+              @sources.each.with_index do |(kind, _title, fields), index|
                 fieldset(data_source: kind, disabled: index > 0, hidden: index > 0) { render fields }
               end
 
