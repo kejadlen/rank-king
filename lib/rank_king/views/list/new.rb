@@ -29,7 +29,9 @@ module RankKing
               label(class: "field") do
                 plain "Source"
                 select(name: "source") do
-                  @sources.each { |kind, title, _fields| option(value: kind) { title } }
+                  @sources.each do |kind, title, _fields|
+                    option(value: kind) { title }
+                  end
                 end
                 small { "A list keeps its source." }
               end

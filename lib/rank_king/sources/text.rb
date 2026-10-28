@@ -24,7 +24,9 @@ module RankKing
         names = params["items"].to_s.lines.map(&:strip).reject(&:empty?)
         return false if names.size < 2
 
-        names.each { |name| Item.create(list_id: list.id, name:) }
+        names.each do |name|
+          Item.create(list_id: list.id, name:)
+        end
         true
       end
 
@@ -60,7 +62,9 @@ module RankKing
             end
           end
 
-          added.each {|name| Item.create(list_id: @list.id, name:) }
+          added.each do |name|
+            Item.create(list_id: @list.id, name:)
+          end
         end
       end
     end

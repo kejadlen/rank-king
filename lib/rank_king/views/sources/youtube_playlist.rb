@@ -24,7 +24,9 @@ module RankKing
             label(class: "field") do
               plain "Playlist"
               select(name: "playlist", required: true) do
-                @playlists.each { |id, title| option(value: id) { title } }
+                @playlists.each do |id, title|
+                  option(value: id) { title }
+                end
               end
               small { "Private playlists are listed too. YouTube does not share Watch Later." }
             end

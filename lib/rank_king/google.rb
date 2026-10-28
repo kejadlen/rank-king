@@ -60,9 +60,9 @@ module RankKing
     # out Watch Later and Liked videos.
     #: (String access_token) -> Array[[String, String]]
     def self.playlists(access_token)
-      pages(access_token, PLAYLISTS_URL, { part: "snippet", mine: "true" }).map do |item|
+      pages(access_token, PLAYLISTS_URL, { part: "snippet", mine: "true" }).map { |item|
         [item.fetch("id"), item.dig("snippet", "title").to_s] #: [String, String]
-      end
+      }
     end
 
     # The videos in a playlist, in playlist order, as [video id, title].
@@ -71,12 +71,12 @@ module RankKing
     #: (String access_token, String playlist_id) -> Array[[String, String]]
     def self.playlist_videos(access_token, playlist_id)
       items = pages(access_token, PLAYLIST_ITEMS_URL, { part: "snippet", playlistId: playlist_id })
-      items.filter_map do |item|
+      items.filter_map { |item|
         snippet = item.fetch("snippet")
         next unless snippet["videoOwnerChannelTitle"]
 
         [snippet.dig("resourceId", "videoId"), snippet.fetch("title")] #: [String, String]
-      end
+      }
     end
 
     # Every item of a YouTube list endpoint, following its pages.
@@ -105,7 +105,9 @@ module RankKing
     def self.request(method, url, params, access_token)
       uri = URI(url)
       request = if method == :post
-        Net::HTTP::Post.new(uri).tap { |post| post.set_form_data(params) }
+        Net::HTTP::Post.new(uri).tap do |post|
+          post.set_form_data(params)
+        end
       else
         uri.query = URI.encode_www_form(params)
         Net::HTTP::Get.new(uri)

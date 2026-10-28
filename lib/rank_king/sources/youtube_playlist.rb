@@ -78,9 +78,9 @@ module RankKing
       #: () -> Hash[String, Item]
       def items_by_key
         video_ids = DB[ITEMS].where(item_id: Item.where(list_id: @list.id).select(:id)).to_hash(:item_id, :video_id)
-        Item.where(id: video_ids.keys).all.to_h do |item|
+        Item.where(id: video_ids.keys).all.to_h { |item|
           [video_ids.fetch(item.id).to_s, item] #: [String, Item]
-        end
+        }
       end
 
       #: (Item item, Entry entry) -> void

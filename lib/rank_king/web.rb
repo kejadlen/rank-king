@@ -92,13 +92,15 @@ module RankKing
 
             # The source fills the list from its own fields, or turns it
             # down and nothing is made.
-            list = DB.transaction do
+            list = DB.transaction {
               l = List.create(name: name, user_id: user.id, source_kind: source_kind)
               raise Sequel::Rollback unless Sources.fetch(source_kind).create(l, r.params)
 
-              axis_names.each { |n| Axis.create(list_id: l.id, name: n) }
+              axis_names.each do |n|
+                Axis.create(list_id: l.id, name: n)
+              end
               l
-            end
+            }
             r.halt 422 unless list
 
             r.redirect "/lists/#{list.id}"
@@ -106,10 +108,10 @@ module RankKing
         end
 
         r.get "new" do
-          kinds = Sources::KINDS.map do |kind|
+          kinds = Sources::KINDS.map { |kind|
             source = Sources.fetch(kind)
             [kind, source.title, source.fields(user)] #: [String, String, Sources::_Component]
-          end
+          }
           Views::ListViews::New.new(sources: kinds, csrf: method(:csrf_token)).call
         end
 
