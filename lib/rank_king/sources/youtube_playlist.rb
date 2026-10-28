@@ -11,9 +11,9 @@ module RankKing
     # Each sync fetches the whole playlist again.
     class YouTubePlaylist
       # Which playlist each list follows, keyed by list_id.
-      TABLE = :youtube_playlist_sources
+      TABLE = :youtube_sources
       # Which video each item is, keyed by item_id.
-      ITEMS = :youtube_playlist_items
+      ITEMS = :youtube_items
 
       #: () -> String
       def self.title = "YouTube playlist"

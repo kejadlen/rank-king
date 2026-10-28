@@ -189,8 +189,8 @@ class TestYouTube < Minitest::Test
     assert_equal "YouTubePlaylist", list.source_kind
     refute_nil list.synced_at
     assert_equal %w[First Third Fourth], names(list)
-    assert_equal PLAYLIST, RankKing::DB[:youtube_playlist_sources].where(list_id: list.id).get(:playlist_id)
-    assert_equal %w[v1 v3 v4], RankKing::DB[:youtube_playlist_items].order(:item_id).map(:video_id)
+    assert_equal PLAYLIST, RankKing::DB[:youtube_sources].where(list_id: list.id).get(:playlist_id)
+    assert_equal %w[v1 v3 v4], RankKing::DB[:youtube_items].order(:item_id).map(:video_id)
 
     tokens = @google.calls.select { |_, url, _, _| url == RankKing::Google::TOKEN_URL }
     assert_equal "refresh-the-code", tokens.last[2][:refresh_token]
@@ -263,8 +263,8 @@ class TestYouTube < Minitest::Test
 
     csrf_post "/lists/#{list.id}/delete", {}, from: "/lists/#{list.id}/settings"
     assert last_response.redirect?
-    assert_equal 0, RankKing::DB[:youtube_playlist_sources].count
-    assert_equal 0, RankKing::DB[:youtube_playlist_items].count
+    assert_equal 0, RankKing::DB[:youtube_sources].count
+    assert_equal 0, RankKing::DB[:youtube_items].count
   end
 
   private
