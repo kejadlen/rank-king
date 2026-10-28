@@ -11,7 +11,14 @@ require_relative "../lib/rank_king/web"
 class TestYouTube < Minitest::Test
   include Rack::Test::Methods
 
-  def app = RankKing::Web.app
+  # The app, with the fake Google in place of the real one.
+  class App < RankKing::Web
+    singleton_class.attr_accessor :google
+
+    private def google = self.class.google
+  end
+
+  def app = App.app
 
   LOGIN = "alpha@example.com"
   PLAYLIST = "PLabc123"
@@ -76,11 +83,7 @@ class TestYouTube < Minitest::Test
     RankKing::DB[:users].delete
 
     @google = FakeGoogle.new
-    RankKing::Google.default = @google
-  end
-
-  def teardown
-    RankKing::Google.default = nil
+    App.google = @google
   end
 
   def test_settings_offers_to_connect_google

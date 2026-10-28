@@ -52,7 +52,7 @@ module RankKing
           r.get "connect" do
             state = SecureRandom.hex(16)
             session["google_state"] = state
-            r.redirect Google.default.authorize_url(redirect_uri:, state:)
+            r.redirect google.authorize_url(redirect_uri:, state:)
           end
 
           r.get "callback" do
@@ -61,7 +61,7 @@ module RankKing
             # The user said no on Google's side.
             r.redirect "/settings" if r.params["error"]
 
-            refresh_token = Google.default.refresh_token(r.params["code"].to_s, redirect_uri:)
+            refresh_token = google.refresh_token(r.params["code"].to_s, redirect_uri:)
             if (account = user.google_account)
               account.update(refresh_token:)
             else
@@ -92,7 +92,7 @@ module RankKing
             # down and nothing is made.
             list = DB.transaction {
               l = List.create(name: name, user_id: user.id, source_kind: source_kind)
-              raise Sequel::Rollback unless Sources.fetch(source_kind).create(l, r.params)
+              raise Sequel::Rollback unless Sources.fetch(source_kind).create(l, r.params, google:)
 
               axis_names.each do |n|
                 Axis.create(list_id: l.id, name: n)
@@ -108,7 +108,7 @@ module RankKing
         r.get "new" do
           kinds = Sources::KINDS.map { |kind|
             source = Sources.fetch(kind)
-            [kind, source.title, source.fields(user)] #: [String, String, Sources::_Component]
+            [kind, source.title, source.fields(user, google:)] #: [String, String, Sources::_Component]
           }
           Views::ListViews::New.new(sources: kinds, csrf: method(:csrf_token)).call
         end
@@ -121,7 +121,7 @@ module RankKing
           r.is do
             r.get do
               axis = list.axes_dataset.where(id: r.params["axis"].to_i).first
-              Views::ListViews::Show.new(list: list, axis: axis, csrf: method(:csrf_token)).call
+              Views::ListViews::Show.new(list: list, source: source(list), axis: axis, csrf: method(:csrf_token)).call
             end
           end
 
@@ -151,7 +151,7 @@ module RankKing
 
           # Submitted from the source's own sync dialog.
           r.post "sync" do
-            list.source.sync(r.params)
+            source(list).sync(r.params)
             r.redirect "/lists/#{list.id}"
           end
 
@@ -199,6 +199,14 @@ module RankKing
     end
 
     private
+
+    # The Google client every route and source goes through. Tests
+    # subclass the app to hand back a fake one.
+    #: () -> Google
+    def google = Google.new(client_id: CONFIG.google_client_id, client_secret: CONFIG.google_client_secret)
+
+    #: (List list) -> Sources::_Source
+    def source(list) = Sources.fetch(list.source_kind).for(list, google:)
 
     # Names from a repeated field (`axes[]`), one per tag.
     #: (untyped) -> Array[String]

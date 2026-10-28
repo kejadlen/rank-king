@@ -92,8 +92,9 @@ fly.toml           — Fly config for the main demo and PR previews
   Fly demos set placeholders in `fly.toml`, since anyone can open them.
 
 Tests set `DATABASE_URL=:memory:` and a dummy Google client in
-`test/test_helper.rb`, and set `RankKing::Google.default` to a subclass
-whose `request` answers without the network.
+`test/test_helper.rb`. The app hands its `google` client to every
+source; the YouTube tests subclass the app to return a `Google`
+subclass whose `request` answers without the network.
 
 ## Conventions
 

@@ -1,13 +1,3 @@
-# The default client's writer is defined on the singleton class, which
-# the inline parser cannot read; tests are what call it.
-module RankKing
-  class Google
-    self.@default: Google?
-
-    def self.default=: (Google?) -> void
-  end
-end
-
 # Video is a Data class, whose members the inline parser cannot read.
 module RankKing
   class Google

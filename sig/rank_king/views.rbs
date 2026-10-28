@@ -42,7 +42,7 @@ module RankKing
       end
 
       class Show
-        def initialize: (list: List, csrf: Method, ?axis: Axis?) -> void
+        def initialize: (list: List, source: ::RankKing::Sources::_Source, csrf: Method, ?axis: Axis?) -> void
         def call: () -> String
       end
 

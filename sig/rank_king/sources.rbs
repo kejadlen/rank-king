@@ -35,18 +35,19 @@ module RankKing
 
     # A source kind: a class in Sources, named by a list's source_kind.
     interface _SourceClass
-      # The source for a list, configured from the kind's own table.
-      def for: (List list) -> _Source
+      # The source for a list, configured from the kind's own table. Every
+      # kind is handed the app's Google client, which only YouTube uses.
+      def for: (List list, google: Google) -> _Source
 
       # What the kind is called where a list's source is chosen or shown.
       def title: () -> String
 
       # The kind's own fields on the new-list form.
-      def fields: (User user) -> _Component
+      def fields: (User user, google: Google) -> _Component
 
       # Sets a new list up from what those fields posted: false, and the
       # list is not made, when they are not enough to go on.
-      def create: (List list, Hash[String, untyped] params) -> bool
+      def create: (List list, Hash[String, untyped] params, google: Google) -> bool
     end
 
     # A view component, as a source's form is.

@@ -18,16 +18,15 @@ module RankKing
       #: () -> String
       def self.title = "YouTube playlist"
 
-      #: (List list) -> YouTube
-      def self.for(list) = new(list)
+      #: (List list, google: Google) -> YouTube
+      def self.for(list, google:) = new(list, google:)
 
       # A choice of the user's playlists, fetched as the form is drawn. A
       # Google error says so in place of the choice rather than failing
       # the whole form.
-      #: (User user) -> _Component
-      def self.fields(user)
+      #: (User user, google: Google) -> _Component
+      def self.fields(user, google:)
         account = user.google_account
-        google = Google.default
         playlists = account && google.playlists(google.access_token(account.refresh_token))
         Views::Sources::YouTubeFields.new(playlists:)
       rescue Google::Error => e
@@ -35,19 +34,20 @@ module RankKing
       end
 
       # Follows the playlist chosen on the new-list form and fetches it.
-      #: (List list, Hash[String, untyped] params) -> bool
-      def self.create(list, params)
+      #: (List list, Hash[String, untyped] params, google: Google) -> bool
+      def self.create(list, params, google:)
         playlist_id = params["playlist"].to_s[/\A[\w-]+\z/]
         return false unless playlist_id && list.user.google_account
 
         DB[TABLE].insert(list_id: list.id, playlist_id:)
-        new(list).fetch
+        new(list, google:).fetch
         true
       end
 
-      #: (List list) -> void
-      def initialize(list)
+      #: (List list, google: Google) -> void
+      def initialize(list, google:)
         @list = list
+        @google = google
       end
 
       #: () -> String
@@ -67,10 +67,9 @@ module RankKing
         account = @list.user.google_account
         raise Google::Error, "Connect Google in settings to sync this list" unless account
 
-        google = Google.default
-        access_token = google.access_token(account.refresh_token)
+        access_token = @google.access_token(account.refresh_token)
         # Kept for saved, which caches each video's details by its item.
-        @videos = google.playlist_videos(access_token, playlist_id).uniq(&:id).to_h { |video|
+        @videos = @google.playlist_videos(access_token, playlist_id).uniq(&:id).to_h { |video|
           [video.id, video] #: [String, Google::Video]
         }
         entries = @videos.each_value.map { |video| Entry.new(key: video.id, name: video.title) }

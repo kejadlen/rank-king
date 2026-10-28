@@ -8,19 +8,19 @@ module RankKing
     # over the list's items, which matches them by id, so there is nothing
     # to fetch and no table of its own.
     class Text
-      #: (List list) -> Text
-      def self.for(list) = new(list)
+      #: (List list, google: Google) -> Text
+      def self.for(list, google:) = new(list)
 
       #: () -> String
       def self.title = "Typed list"
 
-      #: (User user) -> _Component
-      def self.fields(user) = Views::Sources::TextFields.new
+      #: (User user, google: Google) -> _Component
+      def self.fields(user, google:) = Views::Sources::TextFields.new
 
       # Adds the items typed into the new-list form, of which there must
       # be at least two.
-      #: (List list, Hash[String, untyped] params) -> bool
-      def self.create(list, params)
+      #: (List list, Hash[String, untyped] params, google: Google) -> bool
+      def self.create(list, params, google:)
         names = params["items"].to_s.lines.map(&:strip).reject(&:empty?)
         return false if names.size < 2
 

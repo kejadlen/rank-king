@@ -4,8 +4,6 @@ require "json"
 require "net/http"
 require "uri"
 
-require_relative "config"
-
 module RankKing
   # The Google APIs rank-king calls: OAuth, to connect a user's account,
   # and the YouTube Data API, to read their playlists. Every call goes
@@ -25,15 +23,6 @@ module RankKing
     PLAYLISTS_URL = "https://www.googleapis.com/youtube/v3/playlists"
     PLAYLIST_ITEMS_URL = "https://www.googleapis.com/youtube/v3/playlistItems"
     SCOPE = "https://www.googleapis.com/auth/youtube.readonly"
-
-    # The client the app uses, for the OAuth client in CONFIG. Tests set
-    # their own.
-    singleton_class.attr_writer :default
-
-    #: () -> Google
-    def self.default
-      @default ||= new(client_id: CONFIG.google_client_id, client_secret: CONFIG.google_client_secret)
-    end
 
     #: (client_id: String, client_secret: String) -> void
     def initialize(client_id:, client_secret:)
