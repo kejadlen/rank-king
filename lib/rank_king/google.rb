@@ -13,6 +13,11 @@ module RankKing
     # Google refused a request, or answered with something unexpected.
     class Error < StandardError; end
 
+    # A video in a playlist, as YouTube describes it.
+    # Signed in sig/rank_king/google.rbs: a Data class.
+    # @rbs skip
+    Video = Data.define(:id, :title, :channel_title, :thumbnail_url)
+
     AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
     TOKEN_URL = "https://oauth2.googleapis.com/token"
     PLAYLISTS_URL = "https://www.googleapis.com/youtube/v3/playlists"
@@ -65,18 +70,30 @@ module RankKing
       }
     end
 
-    # The videos in a playlist, in playlist order, as [video id, title].
-    # Deleted videos, and private ones the user cannot see, carry no
-    # owner and are left out.
-    #: (String access_token, String playlist_id) -> Array[[String, String]]
+    # The videos in a playlist, in playlist order. Deleted videos, and
+    # private ones the user cannot see, carry no owner and are left out.
+    #: (String access_token, String playlist_id) -> Array[Video]
     def self.playlist_videos(access_token, playlist_id)
       items = pages(access_token, PLAYLIST_ITEMS_URL, { part: "snippet", playlistId: playlist_id })
       items.filter_map { |item|
         snippet = item.fetch("snippet")
-        next unless snippet["videoOwnerChannelTitle"]
+        channel_title = snippet["videoOwnerChannelTitle"]
+        next unless channel_title
 
-        [snippet.dig("resourceId", "videoId"), snippet.fetch("title")] #: [String, String]
+        Video.new(
+          id: snippet.dig("resourceId", "videoId"),
+          title: snippet.fetch("title"),
+          channel_title:,
+          thumbnail_url: thumbnail_url(snippet["thumbnails"] || {}),
+        )
       }
+    end
+
+    # The medium thumbnail (320×180), or the nearest size there is.
+    #: (Hash[String, untyped] thumbnails) -> String?
+    def self.thumbnail_url(thumbnails)
+      size = %w[medium high default standard maxres].find { |name| thumbnails.key?(name) }
+      size && thumbnails.dig(size, "url")
     end
 
     # Every item of a YouTube list endpoint, following its pages.

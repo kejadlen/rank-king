@@ -53,8 +53,14 @@ class TestYouTube < Minitest::Test
 
     # A nil title stands for a deleted video, which has no owner.
     def item(id, title)
-      snippet = { "title" => title || "Deleted video", "resourceId" => { "videoId" => id } }
-      snippet["videoOwnerChannelTitle"] = "A channel" if title
+      snippet = { "title" => title || "Deleted video", "resourceId" => { "videoId" => id }, "thumbnails" => {} }
+      if title
+        snippet["videoOwnerChannelTitle"] = "A channel"
+        snippet["thumbnails"] = {
+          "default" => { "url" => "https://i.ytimg.com/vi/#{id}/default.jpg" },
+          "medium" => { "url" => "https://i.ytimg.com/vi/#{id}/mqdefault.jpg" },
+        }
+      end
       { "snippet" => snippet }
     end
   end
@@ -191,6 +197,10 @@ class TestYouTube < Minitest::Test
     assert_equal %w[First Third Fourth], names(list)
     assert_equal PLAYLIST, RankKing::DB[:youtube_sources].where(list_id: list.id).get(:playlist_id)
     assert_equal %w[v1 v3 v4], RankKing::DB[:youtube_items].order(:item_id).map(:video_id)
+    first = RankKing::DB[:youtube_items].first(video_id: "v1")
+    assert_equal "First", first[:title]
+    assert_equal "A channel", first[:channel_title]
+    assert_equal "https://i.ytimg.com/vi/v1/mqdefault.jpg", first[:thumbnail_url]
 
     tokens = @google.calls.select { |_, url, _, _| url == RankKing::Google::TOKEN_URL }
     assert_equal "refresh-the-code", tokens.last[2][:refresh_token]
@@ -225,6 +235,7 @@ class TestYouTube < Minitest::Test
     assert_equal ["First, renamed", "Third"], names(list)
     refute_nil second.reload.archived_at
     assert_equal "First, renamed", first.reload.name
+    assert_equal "First, renamed", RankKing::DB[:youtube_items].first(item_id: first.id)[:title]
 
     @google.videos = [["v2", "Second"]]
     sync(list)

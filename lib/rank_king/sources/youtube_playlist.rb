@@ -67,8 +67,11 @@ module RankKing
         raise Google::Error, "Connect Google in settings to sync this list" unless account
 
         access_token = Google.access_token(account.refresh_token)
-        videos = Google.playlist_videos(access_token, playlist_id).uniq { |video_id, _| video_id }
-        entries = videos.map { |video_id, title| Entry.new(key: video_id, name: title) }
+        # Kept for saved, which caches each video's details by its item.
+        @videos = Google.playlist_videos(access_token, playlist_id).uniq(&:id).to_h { |video|
+          [video.id, video] #: [String, Google::Video]
+        }
+        entries = @videos.each_value.map { |video| Entry.new(key: video.id, name: video.title) }
         Sync.call(@list, entries, source: self)
       end
 
@@ -85,7 +88,11 @@ module RankKing
 
       #: (Item item, Entry entry) -> void
       def saved(item, entry)
-        DB[ITEMS].replace(item_id: item.id, video_id: entry.key)
+        video = @videos&.fetch(entry.key)
+        DB[ITEMS].replace(
+          item_id: item.id, video_id: entry.key, title: entry.name,
+          channel_title: video&.channel_title, thumbnail_url: video&.thumbnail_url,
+        )
       end
     end
   end
