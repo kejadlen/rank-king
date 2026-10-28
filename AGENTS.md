@@ -25,7 +25,7 @@ lib/rank_king/     — app code
   config.rb        — Config data class, reads from ENV
   db.rb            — Sequel connection + migration runner
   models.rb        — Sequel models (User, GoogleAccount, List, Item, Axis, Result)
-  google.rb        — Google OAuth and the YouTube Data API, over a swappable transport
+  google.rb        — Google client: OAuth and the YouTube Data API
   sources.rb       — Sources.fetch: a list's source_kind names a class in Sources
   sources/         — one class per source kind
   sync.rb          — reconciles a list's items with a fresh snapshot from a fetching source
@@ -92,8 +92,8 @@ fly.toml           — Fly config for the main demo and PR previews
   Fly demos set placeholders in `fly.toml`, since anyone can open them.
 
 Tests set `DATABASE_URL=:memory:` and a dummy Google client in
-`test/test_helper.rb`, and swap `RankKing::Google.transport` so no
-request leaves them.
+`test/test_helper.rb`, and set `RankKing::Google.default` to a subclass
+whose `request` answers without the network.
 
 ## Conventions
 

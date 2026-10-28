@@ -27,7 +27,8 @@ module RankKing
       #: (User user) -> _Component
       def self.fields(user)
         account = user.google_account
-        playlists = account && Google.playlists(Google.access_token(account.refresh_token))
+        google = Google.default
+        playlists = account && google.playlists(google.access_token(account.refresh_token))
         Views::Sources::YouTubeFields.new(playlists:)
       rescue Google::Error => e
         Views::Sources::YouTubeFields.new(playlists: nil, error: e.message)
@@ -66,9 +67,10 @@ module RankKing
         account = @list.user.google_account
         raise Google::Error, "Connect Google in settings to sync this list" unless account
 
-        access_token = Google.access_token(account.refresh_token)
+        google = Google.default
+        access_token = google.access_token(account.refresh_token)
         # Kept for saved, which caches each video's details by its item.
-        @videos = Google.playlist_videos(access_token, playlist_id).uniq(&:id).to_h { |video|
+        @videos = google.playlist_videos(access_token, playlist_id).uniq(&:id).to_h { |video|
           [video.id, video] #: [String, Google::Video]
         }
         entries = @videos.each_value.map { |video| Entry.new(key: video.id, name: video.title) }

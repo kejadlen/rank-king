@@ -1,16 +1,16 @@
-# The transport's writer is defined on the singleton class, which the
-# inline parser cannot read; tests are what call it.
+# The default client's writer is defined on the singleton class, which
+# the inline parser cannot read; tests are what call it.
 module RankKing
-  module Google
-    self.@transport: (^(Symbol, String, Hash[Symbol, String], String?) -> Hash[String, untyped])?
+  class Google
+    self.@default: Google?
 
-    def self.transport=: (^(Symbol, String, Hash[Symbol, String], String?) -> Hash[String, untyped]) -> void
+    def self.default=: (Google?) -> void
   end
 end
 
 # Video is a Data class, whose members the inline parser cannot read.
 module RankKing
-  module Google
+  class Google
     class Video
       attr_reader id: String
       attr_reader title: String

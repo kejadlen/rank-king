@@ -16,19 +16,23 @@ class TestYouTube < Minitest::Test
   LOGIN = "alpha@example.com"
   PLAYLIST = "PLabc123"
 
-  # Google, as far as rank-king talks to it. The playlist pages two videos
-  # at a time, so fetching it has to follow nextPageToken.
-  class FakeGoogle
+  # Google, as far as rank-king talks to it: the real client with its
+  # requests answered here. The playlist pages two videos at a time, so
+  # fetching it has to follow nextPageToken.
+  class FakeGoogle < RankKing::Google
     attr_reader :calls
-    attr_accessor :videos, :playlists, :error
+    attr_accessor :videos, :user_playlists, :error
 
     def initialize
+      super(client_id: "client-id", client_secret: "client-secret")
       @calls = []
       @videos = []
-      @playlists = [["PLabc123", "Music"], ["PLdef456", "Talks"]]
+      @user_playlists = [["PLabc123", "Music"], ["PLdef456", "Talks"]]
     end
 
-    def call(method, url, params, access_token)
+    private
+
+    def request(method, url, params, access_token)
       @calls << [method, url, params, access_token]
       raise RankKing::Google::Error, error if error
 
@@ -40,7 +44,7 @@ class TestYouTube < Minitest::Test
           { "access_token" => "access-#{params[:refresh_token]}" }
         end
       when RankKing::Google::PLAYLISTS_URL
-        { "items" => playlists.map { |id, title| { "id" => id, "snippet" => { "title" => title } } } }
+        { "items" => user_playlists.map { |id, title| { "id" => id, "snippet" => { "title" => title } } } }
       when RankKing::Google::PLAYLIST_ITEMS_URL
         page = params[:pageToken].to_i
         body = { "items" => videos[page * 2, 2].to_a.map { |id, title| item(id, title) } }
@@ -48,8 +52,6 @@ class TestYouTube < Minitest::Test
         body
       end
     end
-
-    private
 
     # A nil title stands for a deleted video, which has no owner.
     def item(id, title)
@@ -74,11 +76,11 @@ class TestYouTube < Minitest::Test
     RankKing::DB[:users].delete
 
     @google = FakeGoogle.new
-    RankKing::Google.transport = @google.method(:call)
+    RankKing::Google.default = @google
   end
 
   def teardown
-    RankKing::Google.transport = nil
+    RankKing::Google.default = nil
   end
 
   def test_settings_offers_to_connect_google
@@ -159,7 +161,7 @@ class TestYouTube < Minitest::Test
 
   def test_new_list_says_when_there_are_no_playlists
     connect_google
-    @google.playlists = []
+    @google.user_playlists = []
     get "/lists/new"
     assert_includes last_response.body, "no playlists yet"
   end

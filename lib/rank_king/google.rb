@@ -8,8 +8,10 @@ require_relative "config"
 
 module RankKing
   # The Google APIs rank-king calls: OAuth, to connect a user's account,
-  # and the YouTube Data API, to read their playlists.
-  module Google
+  # and the YouTube Data API, to read their playlists. Every call goes
+  # through #request, which a subclass overrides to answer without the
+  # network, as the tests' does.
+  class Google
     # Google refused a request, or answered with something unexpected.
     class Error < StandardError; end
 
@@ -24,22 +26,27 @@ module RankKing
     PLAYLIST_ITEMS_URL = "https://www.googleapis.com/youtube/v3/playlistItems"
     SCOPE = "https://www.googleapis.com/auth/youtube.readonly"
 
-    # Makes one request and returns its JSON body: a POST of a form, or
-    # a GET with a query, authorized by the access token when there is
-    # one. Tests swap it for canned answers.
-    singleton_class.attr_writer :transport
+    # The client the app uses, for the OAuth client in CONFIG. Tests set
+    # their own.
+    singleton_class.attr_writer :default
 
-    #: () -> ^(Symbol, String, Hash[Symbol, String], String?) -> Hash[String, untyped]
-    def self.transport
-      @transport ||= ->(method, url, params, access_token) { request(method, url, params, access_token) }
+    #: () -> Google
+    def self.default
+      @default ||= new(client_id: CONFIG.google_client_id, client_secret: CONFIG.google_client_secret)
+    end
+
+    #: (client_id: String, client_secret: String) -> void
+    def initialize(client_id:, client_secret:)
+      @client_id = client_id
+      @client_secret = client_secret
     end
 
     # Where to send the user to grant read access to their YouTube
     # account. prompt=consent makes Google send a refresh token every time.
     #: (redirect_uri: String, state: String) -> String
-    def self.authorize_url(redirect_uri:, state:)
+    def authorize_url(redirect_uri:, state:)
       query = URI.encode_www_form(
-        client_id: CONFIG.google_client_id, redirect_uri:, state:, scope: SCOPE,
+        client_id: @client_id, redirect_uri:, state:, scope: SCOPE,
         response_type: "code", access_type: "offline", prompt: "consent",
       )
       "#{AUTH_URL}?#{query}"
@@ -47,21 +54,21 @@ module RankKing
 
     # Trades the code Google sent back for a refresh token.
     #: (String code, redirect_uri: String) -> String
-    def self.refresh_token(code, redirect_uri:)
-      body = transport.call(:post, TOKEN_URL, { **client, code:, redirect_uri:, grant_type: "authorization_code" }, nil)
+    def refresh_token(code, redirect_uri:)
+      body = request(:post, TOKEN_URL, { **client, code:, redirect_uri:, grant_type: "authorization_code" }, nil)
       body.fetch("refresh_token") { raise Error, "Google sent no refresh token" }
     end
 
     #: (String refresh_token) -> String
-    def self.access_token(refresh_token)
-      body = transport.call(:post, TOKEN_URL, { **client, refresh_token:, grant_type: "refresh_token" }, nil)
+    def access_token(refresh_token)
+      body = request(:post, TOKEN_URL, { **client, refresh_token:, grant_type: "refresh_token" }, nil)
       body.fetch("access_token") { raise Error, "Google sent no access token" }
     end
 
     # The user's own playlists, as [playlist id, title]. YouTube leaves
     # out Watch Later and Liked videos.
     #: (String access_token) -> Array[[String, String]]
-    def self.playlists(access_token)
+    def playlists(access_token)
       pages(access_token, PLAYLISTS_URL, { part: "snippet", mine: "true" }).map { |item|
         [item.fetch("id"), item.dig("snippet", "title").to_s] #: [String, String]
       }
@@ -70,7 +77,7 @@ module RankKing
     # The videos in a playlist, in playlist order. Deleted videos, and
     # private ones the user cannot see, carry no owner and are left out.
     #: (String access_token, String playlist_id) -> Array[Video]
-    def self.playlist_videos(access_token, playlist_id)
+    def playlist_videos(access_token, playlist_id)
       items = pages(access_token, PLAYLIST_ITEMS_URL, { part: "snippet", playlistId: playlist_id })
       items.filter_map { |item|
         snippet = item.fetch("snippet")
@@ -86,22 +93,24 @@ module RankKing
       }
     end
 
+    private
+
     # The medium thumbnail (320×180), or the nearest size there is.
     #: (Hash[String, untyped] thumbnails) -> String?
-    def self.thumbnail_url(thumbnails)
+    def thumbnail_url(thumbnails)
       size = %w[medium high default standard maxres].find { |name| thumbnails.key?(name) }
       size && thumbnails.dig(size, "url")
     end
 
     # Every item of a YouTube list endpoint, following its pages.
     #: (String access_token, String url, Hash[Symbol, String] query) -> Array[Hash[String, untyped]]
-    def self.pages(access_token, url, query)
+    def pages(access_token, url, query)
       items = [] #: Array[Hash[String, untyped]]
       page = nil #: String?
       loop do
         params = { **query, maxResults: "50" } #: Hash[Symbol, String]
         params[:pageToken] = page if page
-        body = transport.call(:get, url, params, access_token)
+        body = request(:get, url, params, access_token)
 
         items.concat(body["items"] || [])
         page = body["nextPageToken"]
@@ -111,12 +120,13 @@ module RankKing
     end
 
     #: () -> Hash[Symbol, String]
-    def self.client
-      { client_id: CONFIG.google_client_id, client_secret: CONFIG.google_client_secret }
-    end
+    def client = { client_id: @client_id, client_secret: @client_secret }
 
+    # Makes one request and returns its JSON body: a POST of a form, or
+    # a GET with a query, authorized by the access token when there is
+    # one.
     #: (Symbol method, String url, Hash[Symbol, String] params, String? access_token) -> Hash[String, untyped]
-    def self.request(method, url, params, access_token)
+    def request(method, url, params, access_token)
       uri = URI(url)
       request = if method == :post
         Net::HTTP::Post.new(uri).tap do |post|

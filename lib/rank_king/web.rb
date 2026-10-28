@@ -52,7 +52,7 @@ module RankKing
           r.get "connect" do
             state = SecureRandom.hex(16)
             session["google_state"] = state
-            r.redirect Google.authorize_url(redirect_uri:, state:)
+            r.redirect Google.default.authorize_url(redirect_uri:, state:)
           end
 
           r.get "callback" do
@@ -61,7 +61,7 @@ module RankKing
             # The user said no on Google's side.
             r.redirect "/settings" if r.params["error"]
 
-            refresh_token = Google.refresh_token(r.params["code"].to_s, redirect_uri:)
+            refresh_token = Google.default.refresh_token(r.params["code"].to_s, redirect_uri:)
             if (account = user.google_account)
               account.update(refresh_token:)
             else
