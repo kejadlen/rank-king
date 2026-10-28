@@ -69,7 +69,7 @@ module RankKing
       def view_template(&block)
         header do
           if @back
-            a(href: @back, class: "icon-button", aria_label: @back_label,
+            a(href: @back, class: "icon-button", data_size: "lg", aria_label: @back_label,
               style: "--gl-icon: var(--gl-icon-chevron-left)")
           end
           h1(class: @size) { @title }

@@ -9,6 +9,38 @@
 }
 
 /* -------------------- */
+/* Surfaces */
+/* -------------------- */
+
+/* Light mode's page sits a hair under the card (#faf9f7 under #fdfdfb),
+   too fine a step for a card to read against. The page takes the fill
+   step instead, as pro-tacts does: one alias repointed to a value
+   already on the ramp. Dark keeps its own block in tokens.css, so this
+   takes that block's scoping inverted. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --gl-color-surface-page: var(--gl-color-surface-fill);
+  }
+}
+:root[data-theme="light"] {
+  --gl-color-surface-page: var(--gl-color-surface-fill);
+}
+
+/* What Gloss fills with surface-fill would now match the page and
+   vanish: hovers and tags take the next step down instead. */
+.card > li > a:only-child:hover,
+.card > li > button:only-child:hover,
+.icon-button:hover:not(:disabled),
+:is(button:not(.icon-button), a.btn):not([role="tab"]):not([data-variant="primary"]):not([data-variant="dark"]):not([data-variant="danger"]):hover:not(:disabled):not([aria-disabled="true"]),
+.tag:not([data-dashed]) {
+  background: var(--gl-color-surface-fill-2);
+}
+
+/* Gloss' prose spacing between list items would sit outside each row,
+   leaving a strip of every hovered row unfilled. Rows in a card meet. */
+.card > li + li { margin-top: 0; }
+
+/* -------------------- */
 /* Page */
 /* -------------------- */
 
@@ -33,6 +65,11 @@ main > header {
 }
 
 main > header h1 { flex: 1; min-width: 0; }
+
+/* The header's icon buttons sit beside a heading, not a label: even at
+   the large size an icon at 1em looks slight next to it, so the icon
+   grows inside the same square. */
+main > header .icon-button { --gl-icon-style-size: 1.35em; }
 
 section {
   display: flex;
@@ -84,14 +121,32 @@ textarea {
   color: var(--gl-color-text-tertiary);
 }
 
-/* The "+ Axis" slot is a dashed tag holding a bare input. */
+/* The "+ Axis" slot is a dashed tag holding a bare input. Gloss' dashed
+   tag only sets a border style on top of `border: none`, which falls
+   back to a 3px medium width; this gives it a hairline instead, with
+   the padding taken in by that pixel so it stands as tall as a tag. */
+.tag[data-dashed] {
+  padding: calc(0.25rem - 1px) calc(0.625rem - 1px);
+  border: 1px dashed var(--gl-color-border-default);
+  transition: border-color var(--gl-dur-fast) var(--gl-ease);
+}
+
+/* The slot takes the focus Input would show, so the input inside it
+   draws none of its own. */
+.tag[data-dashed]:focus-within { border-color: var(--gl-color-accent); }
+
 .tag[data-dashed] input:not([type="checkbox"]):not([type="radio"]) {
   width: 8ch;
   padding: 0;
   border: none;
   background: transparent;
+  box-shadow: none;
   font: inherit;
+  line-height: 1;
 }
+
+/* A list's first axis is made from a lone slot where the tabs will be. */
+form[data-first-axis] { align-items: flex-start; }
 
 /* -------------------- */
 /* List actions menu */

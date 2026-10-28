@@ -17,7 +17,7 @@ Rank King is a webapp for ranking items along multiple axes through pairwise com
 
 ```
 config.ru          — Rack entrypoint (expects the proxy's Remote-User header)
-demo.ru            — config.ru plus StubLogin, for dev and the Fly apps
+demo.ru            — config.ru plus StubLogin and sample lists, for dev and the Fly apps
 Gemfile            — dependencies
 Rakefile           — rake tasks (test, dev)
 db/migrate/        — Sequel migrations
@@ -30,6 +30,7 @@ lib/rank_king/     — app code
   sources/         — one class per source kind
   sync.rb          — reconciles a list's items with a fresh snapshot from a fetching source
   proxy_auth.rb    — reads the login from Remote-User
+  seed.rb          — sample lists for the stub login (demo.ru)
   stub_login.rb    — writes a fixed login where there is no proxy (demo.ru)
   web.rb           — Roda routes
   views/           — Phlex view components

@@ -160,6 +160,14 @@ module RankKing
             r.redirect "/"
           end
 
+          r.post "axes" do
+            name = r.params["name"].to_s.strip
+            r.halt 422 if name.empty?
+
+            axis = Axis.create(list_id: list.id, name: name)
+            r.redirect "/lists/#{list.id}?axis=#{axis.id}"
+          end
+
           r.get "axes", Integer, "compare" do |axis_id|
             axis = list.axes_dataset.where(id: axis_id).first
             r.halt 404 unless axis

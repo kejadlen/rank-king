@@ -249,10 +249,35 @@ class TestWeb < Minitest::Test
     assert_match(/id="axis-#{value.id}-tab"[^>]*aria-selected="true"/, last_response.body)
   end
 
-  def test_show_list_without_axes
+  def test_show_list_without_axes_offers_the_first
     create_list(name: "Simple", items: "A\nB")
-    get "/lists/#{RankKing::List.first.id}"
-    assert_includes last_response.body, "No axes yet."
+    list = RankKing::List.first
+
+    get "/lists/#{list.id}"
+    assert_includes last_response.body, %(action="/lists/#{list.id}/axes")
+    assert_includes last_response.body, 'aria-label="New axis"'
+  end
+
+  def test_add_axis_from_the_list
+    create_list(name: "Simple", items: "A\nB")
+    list = RankKing::List.first
+
+    csrf_post "/lists/#{list.id}/axes", { name: " Taste " }, from: "/lists/#{list.id}"
+    axis = list.axes_dataset.first
+    assert_equal "Taste", axis.name
+    assert_equal "/lists/#{list.id}", URI(last_response.location).path
+    assert_equal "axis=#{axis.id}", URI(last_response.location).query
+
+    follow_redirect!
+    assert_includes last_response.body, "Compare on Taste"
+  end
+
+  def test_add_axis_rejects_empty_name
+    create_list(name: "Simple", items: "A\nB")
+    list = RankKing::List.first
+
+    csrf_post "/lists/#{list.id}/axes", { name: " " }, from: "/lists/#{list.id}"
+    assert_equal 422, last_response.status
   end
 
   def test_compare_shows_a_pair

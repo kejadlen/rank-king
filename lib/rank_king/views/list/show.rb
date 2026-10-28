@@ -37,7 +37,7 @@ module RankKing
         def render_menu
           source = @list.source
 
-          button(class: "icon-button", popovertarget: "list-actions", aria_label: "List actions",
+          button(class: "icon-button", data_size: "lg", popovertarget: "list-actions", aria_label: "List actions",
                  style: "--gl-icon: var(--rk-icon-more)")
           nav(id: "list-actions", popover: true, aria_label: "List actions") do
             ul(class: "card") do
@@ -48,8 +48,17 @@ module RankKing
           dialog(id: "sync-dialog") { render source.form(csrf: @csrf) }
         end
 
+        # Nothing to compare on yet. The "+ Axis" slot stands where the
+        # axis tabs will, and Enter makes the first one.
         def render_items
-          p { "No axes yet. Add one in settings to start comparing." }
+          action = "/lists/#{@list.id}/axes"
+          form(method: "post", action: action, data_first_axis: true) do
+            input(type: "hidden", name: "_csrf", value: @csrf.call(action))
+            span(class: "tag", data_dashed: true) do
+              input(type: "text", name: "name", required: true, placeholder: "+ Axis", aria_label: "New axis")
+            end
+          end
+
           ul(class: "card") do
             @list.items.each { |item| li { item.name } }
           end
