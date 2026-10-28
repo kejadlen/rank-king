@@ -13,13 +13,13 @@ Sequel.migration do
       DateTime :updated_at, null: false
     end
 
-    # The YouTubePlaylist source's config: which playlist a list follows.
+    # The YouTube source's config: which playlist a list follows.
     create_table(:youtube_sources) do
       foreign_key :list_id, :lists, primary_key: true, on_delete: :cascade
       String :playlist_id, null: false
     end
 
-    # The video behind each item of a YouTubePlaylist list, which is how
+    # The video behind each item of a YouTube list, which is how
     # a sync recognizes the item again, and what YouTube said about it at
     # the last sync.
     create_table(:youtube_items) do

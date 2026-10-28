@@ -8,7 +8,7 @@ module RankKing
       # The YouTube playlist source's fields on the new-list form: a choice
       # of the user's playlists, once they have connected Google. playlists
       # is nil until then.
-      class YouTubePlaylistFields < Phlex::HTML
+      class YouTubeFields < Phlex::HTML
         def initialize(playlists:, configured:, error: nil)
           @playlists = playlists
           @configured = configured
@@ -44,7 +44,7 @@ module RankKing
 
       # The YouTube playlist source's sync dialog: there is nothing to
       # fill in, so it says what syncing does and shows it working.
-      class YouTubePlaylist < Phlex::HTML
+      class YouTube < Phlex::HTML
         def initialize(list:, csrf:)
           @list = list
           @csrf = csrf

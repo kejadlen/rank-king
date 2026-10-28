@@ -24,12 +24,12 @@ module RankKing
         def call: () -> String
       end
 
-      class YouTubePlaylist
+      class YouTube
         def initialize: (list: List, csrf: Method) -> void
         def call: () -> String
       end
 
-      class YouTubePlaylistFields
+      class YouTubeFields
         def initialize: (playlists: Array[[String, String]]?, configured: bool, ?error: String?) -> void
         def call: () -> String
       end

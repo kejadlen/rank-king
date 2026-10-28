@@ -2,14 +2,14 @@
 
 require_relative "../google"
 require_relative "../sync"
-require_relative "../views/sources/youtube_playlist"
+require_relative "../views/sources/youtube"
 
 module RankKing
   module Sources
     # A list that follows one of the owner's YouTube playlists, read
     # through their connected Google account, so private ones work too.
     # Each sync fetches the whole playlist again.
-    class YouTubePlaylist
+    class YouTube
       # Which playlist each list follows, keyed by list_id.
       TABLE = :youtube_sources
       # Which video each item is, keyed by item_id.
@@ -18,7 +18,7 @@ module RankKing
       #: () -> String
       def self.title = "YouTube playlist"
 
-      #: (List list) -> YouTubePlaylist
+      #: (List list) -> YouTube
       def self.for(list) = new(list)
 
       # A choice of the user's playlists, fetched as the form is drawn. A
@@ -28,9 +28,9 @@ module RankKing
       def self.fields(user)
         account = user.google_account
         playlists = account && Google.playlists(Google.access_token(account.refresh_token))
-        Views::Sources::YouTubePlaylistFields.new(playlists:, configured: Google.configured?)
+        Views::Sources::YouTubeFields.new(playlists:, configured: Google.configured?)
       rescue Google::Error => e
-        Views::Sources::YouTubePlaylistFields.new(playlists: nil, configured: true, error: e.message)
+        Views::Sources::YouTubeFields.new(playlists: nil, configured: true, error: e.message)
       end
 
       # Follows the playlist chosen on the new-list form and fetches it.
@@ -53,7 +53,7 @@ module RankKing
       def label = "Sync from YouTube"
 
       #: (csrf: Method) -> _Component
-      def form(csrf:) = Views::Sources::YouTubePlaylist.new(list: @list, csrf:)
+      def form(csrf:) = Views::Sources::YouTube.new(list: @list, csrf:)
 
       # The dialog posts nothing to apply: syncing is fetching.
       #: (Hash[String, untyped] params) -> void

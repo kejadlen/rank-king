@@ -150,7 +150,7 @@ class TestYouTube < Minitest::Test
 
   def test_new_list_asks_to_connect_google_first
     get "/lists/new"
-    assert_includes last_response.body, %(<option value="YouTubePlaylist">YouTube playlist</option>)
+    assert_includes last_response.body, %(<option value="YouTube">YouTube playlist</option>)
     assert_includes last_response.body, %(<a href="/settings">your settings</a>)
     refute_includes last_response.body, %(name="playlist")
   end
@@ -192,7 +192,7 @@ class TestYouTube < Minitest::Test
     assert last_response.redirect?
 
     list = RankKing::List.first
-    assert_equal "YouTubePlaylist", list.source_kind
+    assert_equal "YouTube", list.source_kind
     refute_nil list.synced_at
     assert_equal %w[First Third Fourth], names(list)
     assert_equal PLAYLIST, RankKing::DB[:youtube_sources].where(list_id: list.id).get(:playlist_id)
@@ -303,7 +303,7 @@ class TestYouTube < Minitest::Test
   def names(list) = list.items_dataset.order(:id).map(:name)
 
   def create_list(playlist:)
-    csrf_post "/lists", { name: "Videos", source: "YouTubePlaylist", playlist: }, from: "/lists/new"
+    csrf_post "/lists", { name: "Videos", source: "YouTube", playlist: }, from: "/lists/new"
   end
 
   def sync(list)

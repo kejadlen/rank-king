@@ -12,13 +12,13 @@ module RankKing
 end
 
 require_relative "sources/text"
-require_relative "sources/youtube_playlist"
+require_relative "sources/youtube"
 
 module RankKing
   module Sources
     # Every kind a list can be made from, in the order the new-list form
     # offers them. A list keeps its kind for good.
-    KINDS = %w[Text YouTubePlaylist].freeze #: Array[String]
+    KINDS = %w[Text YouTube].freeze #: Array[String]
 
     # A list's source_kind names a class in this module.
     #: (String kind) -> _SourceClass

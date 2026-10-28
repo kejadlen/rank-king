@@ -52,7 +52,7 @@ fly.toml           — Fly config for the main demo and PR previews
 
 - **User** has many Lists; identified by the login on the `Remote-User` header. Their settings page (`/settings`) connects a Google account (**GoogleAccount**, which keeps only the refresh token)
 - **List** belongs to a User and has many Items and Axes, and one source (`source_kind` names a class in `Sources`). Each source renders its own sync dialog on the list page and applies what it posts: `Text`'s edits items by id, and a kind that fetches calls `Sync.call`. A fetching kind keeps its config in its own table keyed by `list_id` and its per-item details in a table keyed by `item_id`
-- Sources: `Text` (typed in, edited by id) and `YouTubePlaylist` (follows one of the owner's playlists through their Google account; `youtube_sources` by `list_id`, `youtube_items` by `item_id`)
+- Sources: `Text` (typed in, edited by id) and `YouTube` (follows one of the owner's playlists through their Google account; `youtube_sources` by `list_id`, `youtube_items` by `item_id`)
 - **Item** belongs to a List; removed items, and items missing from the latest sync, are archived (`archived_at`) and hidden everywhere
 - **Axis** belongs to a List, has many Results
 - **Result** belongs to an Axis, a winner (Item), and a loser (Item)
