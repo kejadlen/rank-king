@@ -9,9 +9,8 @@ module RankKing
       # of the user's playlists, once they have connected Google. playlists
       # is nil until then.
       class YouTubeFields < Phlex::HTML
-        def initialize(playlists:, configured:, error: nil)
+        def initialize(playlists:, error: nil)
           @playlists = playlists
-          @configured = configured
           @error = error
         end
 
@@ -30,14 +29,12 @@ module RankKing
               end
               small { "Private playlists are listed too. YouTube does not share Watch Later." }
             end
-          elsif @configured
+          else
             p do
               plain "Connect Google in "
               a(href: "/settings") { "your settings" }
               plain " to make a list from a YouTube playlist."
             end
-          else
-            p { "This server has no Google client set up, so YouTube lists cannot be made yet." }
           end
         end
       end

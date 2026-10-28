@@ -28,9 +28,9 @@ module RankKing
       def self.fields(user)
         account = user.google_account
         playlists = account && Google.playlists(Google.access_token(account.refresh_token))
-        Views::Sources::YouTubeFields.new(playlists:, configured: Google.configured?)
+        Views::Sources::YouTubeFields.new(playlists:)
       rescue Google::Error => e
-        Views::Sources::YouTubeFields.new(playlists: nil, configured: true, error: e.message)
+        Views::Sources::YouTubeFields.new(playlists: nil, error: e.message)
       end
 
       # Follows the playlist chosen on the new-list form and fetches it.

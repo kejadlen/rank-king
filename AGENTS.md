@@ -85,11 +85,11 @@ fly.toml           — Fly config for the main demo and PR previews
 
 - `DATABASE_URL` — SQLite path (default: `:memory:`)
 - `SESSION_SECRET` — session signing key (auto-generated if unset)
-- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — a Google OAuth web client
-  with the YouTube Data API enabled, for connecting Google. Its redirect
-  URI is `<app URL>/settings/google/callback`. Without them YouTube lists
-  are not offered. A consent screen left in Testing mode expires refresh
-  tokens after 7 days.
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (required) — a Google OAuth
+  web client with the YouTube Data API enabled, for connecting Google.
+  Its redirect URI is `<app URL>/settings/google/callback`. A consent
+  screen left in Testing mode expires refresh tokens after 7 days. The
+  Fly demos set placeholders in `fly.toml`, since anyone can open them.
 
 Tests set `DATABASE_URL=:memory:` and a dummy Google client in
 `test/test_helper.rb`, and swap `RankKing::Google.transport` so no

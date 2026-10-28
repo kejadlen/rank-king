@@ -87,17 +87,6 @@ class TestYouTube < Minitest::Test
     assert_includes last_response.body, %(href="/settings/google/connect")
   end
 
-  def test_settings_says_when_google_is_not_set_up
-    unconfigured do
-      get "/settings"
-      refute_includes last_response.body, "/settings/google/connect"
-      assert_includes last_response.body, "GOOGLE_CLIENT_ID"
-
-      get "/settings/google/connect"
-      assert_equal 404, last_response.status
-    end
-  end
-
   def test_connecting_google_keeps_a_refresh_token
     get "/settings/google/connect"
     assert last_response.redirect?
@@ -281,17 +270,6 @@ class TestYouTube < Minitest::Test
   private
 
   def user = RankKing::User.first(login: LOGIN)
-
-  # As if the server had no Google client.
-  def unconfigured
-    google = RankKing::Google.singleton_class
-    google.alias_method :__configured?, :configured?
-    google.define_method(:configured?) { false }
-    yield
-  ensure
-    google.alias_method :configured?, :__configured?
-    google.remove_method :__configured?
-  end
 
   def connect_google
     get "/settings/google/connect"

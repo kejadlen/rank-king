@@ -9,7 +9,7 @@ module RankKing
     end
 
     class Settings
-      def initialize: (user: User, google_configured: bool, csrf: Method) -> void
+      def initialize: (user: User, csrf: Method) -> void
       def call: () -> String
     end
 
@@ -30,7 +30,7 @@ module RankKing
       end
 
       class YouTubeFields
-        def initialize: (playlists: Array[[String, String]]?, configured: bool, ?error: String?) -> void
+        def initialize: (playlists: Array[[String, String]]?, ?error: String?) -> void
         def call: () -> String
       end
     end

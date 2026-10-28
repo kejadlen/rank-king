@@ -34,9 +34,6 @@ module RankKing
       @transport ||= ->(method, url, params, access_token) { request(method, url, params, access_token) }
     end
 
-    #: () -> bool
-    def self.configured? = !!(CONFIG.google_client_id && CONFIG.google_client_secret)
-
     # Where to send the user to grant read access to their YouTube
     # account. prompt=consent makes Google send a refresh token every time.
     #: (redirect_uri: String, state: String) -> String
@@ -115,7 +112,7 @@ module RankKing
 
     #: () -> Hash[Symbol, String]
     def self.client
-      { client_id: CONFIG.google_client_id.to_s, client_secret: CONFIG.google_client_secret.to_s }
+      { client_id: CONFIG.google_client_id, client_secret: CONFIG.google_client_secret }
     end
 
     #: (Symbol method, String url, Hash[Symbol, String] params, String? access_token) -> Hash[String, untyped]

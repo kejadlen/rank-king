@@ -16,6 +16,14 @@ primary_region = 'sjc'
 
 [build]
 
+# The app requires a Google client. The demos get a placeholder rather
+# than the real one: anyone who opens them is the one demo user, so a
+# Google account connected there would be everyone's. Connect Google on
+# a demo fails at Google's consent screen.
+[env]
+  GOOGLE_CLIENT_ID = 'demo'
+  GOOGLE_CLIENT_SECRET = 'demo'
+
 [processes]
   app = 'rackup -o 0.0.0.0 demo.ru'
 

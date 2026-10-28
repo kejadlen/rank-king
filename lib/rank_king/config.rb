@@ -22,10 +22,9 @@ module RankKing
       new(
         database_url: env.fetch("DATABASE_URL", ":memory:"),
         session_secret: env.fetch("SESSION_SECRET") { SecureRandom.hex(64) },
-        # A Google OAuth client, for connecting YouTube. Without one the
-        # settings page says so and YouTube lists cannot be made.
-        google_client_id: env["GOOGLE_CLIENT_ID"],
-        google_client_secret: env["GOOGLE_CLIENT_SECRET"],
+        # A Google OAuth client, for connecting YouTube.
+        google_client_id: env.fetch("GOOGLE_CLIENT_ID"),
+        google_client_secret: env.fetch("GOOGLE_CLIENT_SECRET"),
       )
     end
   end

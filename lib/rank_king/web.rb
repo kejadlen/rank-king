@@ -41,7 +41,7 @@ module RankKing
 
       r.on "settings" do
         r.get true do
-          Views::Settings.new(user:, google_configured: Google.configured?, csrf: method(:csrf_token)).call
+          Views::Settings.new(user:, csrf: method(:csrf_token)).call
         end
 
         # Connecting Google is the OAuth dance: off to Google with a state
@@ -50,8 +50,6 @@ module RankKing
           redirect_uri = "#{r.base_url}/settings/google/callback"
 
           r.get "connect" do
-            r.halt 404 unless Google.configured?
-
             state = SecureRandom.hex(16)
             session["google_state"] = state
             r.redirect Google.authorize_url(redirect_uri:, state:)
