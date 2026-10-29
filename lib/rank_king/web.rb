@@ -1,13 +1,11 @@
 # frozen_string_literal: true
 
 require "roda"
-require "securerandom"
 
 require_relative "models"
 require_relative "proxy_auth"
-require_relative "google"
+require_relative "innertube"
 require_relative "views/home"
-require_relative "views/settings"
 require_relative "views/list/new"
 require_relative "views/list/show"
 require_relative "views/list/compare"
@@ -19,11 +17,11 @@ module RankKing
     plugin :static, %w[ /css /js /vendor ]
     plugin :sessions, secret: CONFIG.session_secret
     plugin :route_csrf, csrf_failure: :empty_403, check_request_methods: %w[POST]
-    plugin :error_handler, classes: [ProxyAuth::MissingLogin, Google::Error] do |e|
+    plugin :error_handler, classes: [ProxyAuth::MissingLogin, InnerTube::Error] do |e|
       response["Content-Type"] = "text/plain"
-      if e.is_a?(Google::Error)
+      if e.is_a?(InnerTube::Error)
         response.status = 502
-        "Google: #{e.message}\n"
+        "YouTube: #{e.message}\n"
       else
         response.status = 401
         "Unauthorized: #{e.message}.\n"
@@ -39,42 +37,10 @@ module RankKing
         Views::Home.new(lists: lists).call
       end
 
-      r.on "settings" do
-        r.get true do
-          Views::Settings.new(user:, csrf: method(:csrf_token)).call
-        end
-
-        # Connecting Google is the OAuth dance: off to Google with a state
-        # only this session knows, and back with a code for a refresh token.
-        r.on "google" do
-          redirect_uri = "#{r.base_url}/settings/google/callback"
-
-          r.get "connect" do
-            state = SecureRandom.hex(16)
-            session["google_state"] = state
-            r.redirect google.authorize_url(redirect_uri:, state:)
-          end
-
-          r.get "callback" do
-            state = session.delete("google_state").to_s
-            r.halt 403 if state.empty? || !Rack::Utils.secure_compare(state, r.params["state"].to_s)
-            # The user said no on Google's side.
-            r.redirect "/settings" if r.params["error"]
-
-            refresh_token = google.refresh_token(r.params["code"].to_s, redirect_uri:)
-            if (account = user.google_account)
-              account.update(refresh_token:)
-            else
-              GoogleAccount.create(user_id: user.id, refresh_token:)
-            end
-            r.redirect "/settings"
-          end
-
-          r.post "disconnect" do
-            user.google_account&.destroy
-            r.redirect "/settings"
-          end
-        end
+      # A fragment for the new-list form: the playlists a pasted cookie
+      # opens. It is a POST so the cookie stays out of URLs and logs.
+      r.post "youtube", "playlists" do
+        Sources::YouTube.playlists(r.params["cookie"], innertube:).call
       end
 
       r.on "lists" do
@@ -92,7 +58,7 @@ module RankKing
             # down and nothing is made.
             list = DB.transaction {
               l = List.create(name: name, user_id: user.id, source_kind: source_kind)
-              raise Sequel::Rollback unless Sources.fetch(source_kind).create(l, r.params, google:)
+              raise Sequel::Rollback unless Sources.fetch(source_kind).create(l, r.params, innertube:)
 
               axis_names.each do |n|
                 Axis.create(list_id: l.id, name: n)
@@ -108,7 +74,7 @@ module RankKing
         r.get "new" do
           kinds = Sources::KINDS.map { |kind|
             source = Sources.fetch(kind)
-            [kind, source.title, source.fields(user, google:)] #: [String, String, Sources::_Component]
+            [kind, source.title, source.fields(csrf: method(:csrf_token))] #: [String, String, Sources::_Component]
           }
           Views::ListViews::New.new(sources: kinds, csrf: method(:csrf_token)).call
         end
@@ -200,13 +166,13 @@ module RankKing
 
     private
 
-    # The Google client every route and source goes through. Tests
+    # The InnerTube client every route and source goes through. Tests
     # subclass the app to hand back a fake one.
-    #: () -> Google
-    def google = Google.new(client_id: CONFIG.google_client_id, client_secret: CONFIG.google_client_secret)
+    #: () -> InnerTube
+    def innertube = InnerTube.new
 
     #: (List list) -> Sources::_Source
-    def source(list) = Sources.fetch(list.source_kind).for(list, google:)
+    def source(list) = Sources.fetch(list.source_kind).for(list, innertube:)
 
     # Names from a repeated field (`axes[]`), one per tag.
     #: (untyped) -> Array[String]

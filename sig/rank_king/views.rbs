@@ -8,11 +8,6 @@ module RankKing
       def call: () -> String
     end
 
-    class Settings
-      def initialize: (user: User, csrf: Method) -> void
-      def call: () -> String
-    end
-
     module Sources
       class Text
         def initialize: (list: List, csrf: Method) -> void
@@ -30,6 +25,11 @@ module RankKing
       end
 
       class YouTubeFields
+        def initialize: (csrf: Method) -> void
+        def call: () -> String
+      end
+
+      class YouTubePlaylists
         def initialize: (playlists: Array[[String, String]]?, ?error: String?) -> void
         def call: () -> String
       end

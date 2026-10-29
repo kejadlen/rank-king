@@ -1,0 +1,13 @@
+# Video is a Data class, whose members the inline parser cannot read.
+module RankKing
+  class InnerTube
+    class Video
+      attr_reader id: String
+      attr_reader title: String
+      attr_reader channel_title: String?
+      attr_reader thumbnail_url: String
+
+      def self.new: (id: String, title: String, channel_title: String?, thumbnail_url: String) -> instance
+    end
+  end
+end

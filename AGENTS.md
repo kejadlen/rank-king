@@ -24,8 +24,8 @@ db/migrate/        — Sequel migrations
 lib/rank_king/     — app code
   config.rb        — Config data class, reads from ENV
   db.rb            — Sequel connection + migration runner
-  models.rb        — Sequel models (User, GoogleAccount, List, Item, Axis, Result)
-  google.rb        — Google client: OAuth and the YouTube Data API
+  models.rb        — Sequel models (User, List, Item, Axis, Result)
+  innertube.rb     — YouTube client: InnerTube, signed with a pasted browser cookie
   sources.rb       — Sources.fetch: a list's source_kind names a class in Sources
   sources/         — one class per source kind
   sync.rb          — reconciles a list's items with a fresh snapshot from a fetching source
@@ -41,7 +41,7 @@ Steepfile          — type checking config
 public/            — static assets
   vendor/gloss/    — vendored Gloss CSS and JS (refresh with rake gloss:vendor)
   css/app.css      — Rank King's layout over Gloss
-  js/app.js        — axis tags, confirmations, busy buttons, new-list source fields
+  js/app.js        — axis tags, confirmations, busy buttons, new-list source fields, YouTube playlist picker
 .github/workflows/ — CI, PR previews, preview reaper (GitHub Actions)
 Dockerfile         — production image
 fly.toml           — Fly config for the main demo and PR previews
@@ -50,9 +50,9 @@ fly.toml           — Fly config for the main demo and PR previews
 
 ## Domain model
 
-- **User** has many Lists; identified by the login on the `Remote-User` header. Their settings page (`/settings`) connects a Google account (**GoogleAccount**, which keeps only the refresh token)
+- **User** has many Lists; identified by the login on the `Remote-User` header
 - **List** belongs to a User and has many Items and Axes, and one source (`source_kind` names a class in `Sources`). Each source renders its own sync dialog on the list page and applies what it posts: `Text`'s edits items by id, and a kind that fetches calls `Sync.call`. A fetching kind keeps its config in its own table keyed by `list_id` and its per-item details in a table keyed by `item_id`
-- Sources: `Text` (typed in, edited by id) and `YouTube` (follows one of the owner's playlists through their Google account; `youtube_sources` by `list_id`, `youtube_items` by `item_id`)
+- Sources: `Text` (typed in, edited by id) and `YouTube` (follows one of the owner's playlists, Watch Later included, with a youtube.com cookie pasted for each fetch and never kept; `youtube_sources` by `list_id`, `youtube_items` by `item_id`)
 - **Item** belongs to a List; removed items, and items missing from the latest sync, are archived (`archived_at`) and hidden everywhere
 - **Axis** belongs to a List, has many Results
 - **Result** belongs to an Axis, a winner (Item), and a loser (Item)
@@ -85,18 +85,30 @@ fly.toml           — Fly config for the main demo and PR previews
 
 - `DATABASE_URL` — SQLite path (default: `:memory:`)
 - `SESSION_SECRET` — session signing key (auto-generated if unset)
-- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET_COMMAND` (required) — a
-  Google OAuth web client with the YouTube Data API enabled, for
-  connecting Google. The secret is whatever the command prints, run once
-  at boot (e.g. `op read op://…` or `cat ~/.config/rank-king/secret`).
-  Its redirect URI is `<app URL>/settings/google/callback`. A consent
-  screen left in Testing mode expires refresh tokens after 7 days. The
-  Fly demos set placeholders in `fly.toml`, since anyone can open them.
 
-Tests set `DATABASE_URL=:memory:` and a dummy Google client in
-`test/test_helper.rb`. The app hands its `google` client to every
-source; the YouTube tests subclass the app to return a `Google`
-subclass whose `request` answers without the network.
+Tests set `DATABASE_URL=:memory:` in `test/test_helper.rb`. The app
+hands its `innertube` client to every source; the YouTube tests subclass
+the app to return an `InnerTube` subclass whose `request` answers
+without the network.
+
+## YouTube
+
+YouTube is read through InnerTube (`youtubei/v1/browse`), the private
+API youtube.com's own pages call, not OAuth and the Data API: an
+Advanced Protection account cannot grant OAuth to an unverified client,
+and the Data API never returns Watch Later. Requests carry the user's
+pasted Cookie header and a `SAPISIDHASH` Authorization signed from it.
+The cookie is pasted on the new-list form, where app.js posts it to
+`/youtube/playlists` for the picker, and again in each sync dialog;
+rank-king never stores it.
+
+- `FEplaylist_aggregation` lists playlists (Watch Later and Liked
+  videos included); `VL<playlist id>` browses one.
+- A signed-out cookie still gets `200`, with `logged_in` `0` and an
+  error alert, so `InnerTube#check` raises rather than let a sync
+  archive the whole list.
+- `InnerTube::CLIENT`'s `clientVersion` may need bumping if YouTube
+  starts refusing it.
 
 ## Conventions
 

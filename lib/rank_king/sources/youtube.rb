@@ -1,53 +1,64 @@
 # frozen_string_literal: true
 
-require_relative "../google"
+require_relative "../innertube"
 require_relative "../sync"
 require_relative "../views/sources/youtube"
 
 module RankKing
   module Sources
     # A list that follows one of the owner's YouTube playlists, read
-    # through their connected Google account, so private ones work too.
-    # Each sync fetches the whole playlist again.
+    # through InnerTube, so private ones and Watch Later work too. Nothing
+    # signs rank-king in for good: each fetch takes a youtube.com cookie
+    # pasted in for it, and the whole playlist is fetched again.
     class YouTube
       # Which playlist each list follows, keyed by list_id.
       TABLE = :youtube_sources
       # Which video each item is, keyed by item_id.
       ITEMS = :youtube_items
+      # Where the new-list form sends a pasted cookie for its choice of
+      # playlists.
+      PLAYLISTS_PATH = "/youtube/playlists"
 
       #: () -> String
       def self.title = "YouTube playlist"
 
-      #: (List list, google: Google) -> YouTube
-      def self.for(list, google:) = new(list, google:)
+      #: (List list, innertube: InnerTube) -> YouTube
+      def self.for(list, innertube:) = new(list, innertube:)
 
-      # A choice of the user's playlists, fetched as the form is drawn. A
-      # Google error says so in place of the choice rather than failing
-      # the whole form.
-      #: (User user, google: Google) -> _Component
-      def self.fields(user, google:)
-        account = user.google_account
-        playlists = account && google.playlists(google.access_token(account.refresh_token))
-        Views::Sources::YouTubeFields.new(playlists:)
-      rescue Google::Error => e
-        Views::Sources::YouTubeFields.new(playlists: nil, error: e.message)
+      #: (csrf: Method) -> _Component
+      def self.fields(csrf:) = Views::Sources::YouTubeFields.new(csrf:)
+
+      # The choice of playlists a pasted cookie opens. Whatever stops it
+      # is said in the choice's place.
+      #: (String text, innertube: InnerTube) -> _Component
+      def self.playlists(text, innertube:)
+        Views::Sources::YouTubePlaylists.new(playlists: innertube.playlists(cookie(text)))
+      rescue InnerTube::Error => e
+        Views::Sources::YouTubePlaylists.new(playlists: nil, error: e.message)
       end
 
-      # Follows the playlist chosen on the new-list form and fetches it.
-      #: (List list, Hash[String, untyped] params, google: Google) -> bool
-      def self.create(list, params, google:)
+      #: (untyped text) -> String
+      def self.cookie(text)
+        InnerTube.cookie(text.to_s) or raise InnerTube::Error, "That cookie has no SAPISID to sign requests with."
+      end
+
+      # Follows the playlist chosen on the new-list form and fetches it
+      # with the cookie pasted there.
+      #: (List list, Hash[String, untyped] params, innertube: InnerTube) -> bool
+      def self.create(list, params, innertube:)
         playlist_id = params["playlist"].to_s[/\A[\w-]+\z/]
-        return false unless playlist_id && list.user.google_account
+        cookie = InnerTube.cookie(params["cookie"].to_s)
+        return false unless playlist_id && cookie
 
         DB[TABLE].insert(list_id: list.id, playlist_id:)
-        new(list, google:).fetch
+        new(list, innertube:).fetch(cookie)
         true
       end
 
-      #: (List list, google: Google) -> void
-      def initialize(list, google:)
+      #: (List list, innertube: InnerTube) -> void
+      def initialize(list, innertube:)
         @list = list
-        @google = google
+        @innertube = innertube
       end
 
       #: () -> String
@@ -56,21 +67,17 @@ module RankKing
       #: (csrf: Method) -> _Component
       def form(csrf:) = Views::Sources::YouTube.new(list: @list, csrf:)
 
-      # The dialog posts nothing to apply: syncing is fetching.
+      # The dialog posts the cookie to fetch with.
       #: (Hash[String, untyped] params) -> void
       def sync(params)
-        fetch
+        fetch(self.class.cookie(params["cookie"]))
       end
 
-      #: () -> Sync::Summary
-      def fetch
-        account = @list.user.google_account
-        raise Google::Error, "Connect Google in settings to sync this list" unless account
-
-        access_token = @google.access_token(account.refresh_token)
+      #: (String cookie) -> Sync::Summary
+      def fetch(cookie)
         # Kept for saved, which caches each video's details by its item.
-        @videos = @google.playlist_videos(access_token, playlist_id).uniq(&:id).to_h { |video|
-          [video.id, video] #: [String, Google::Video]
+        @videos = @innertube.playlist_videos(cookie, playlist_id).uniq(&:id).to_h { |video|
+          [video.id, video] #: [String, InnerTube::Video]
         }
         entries = @videos.each_value.map { |video| Entry.new(key: video.id, name: video.title) }
         Sync.call(@list, entries, source: self)

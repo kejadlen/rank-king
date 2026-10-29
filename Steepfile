@@ -10,5 +10,5 @@ target :lib do
   ignore "lib/rank_king/views", inline: true
   signature "sig"
 
-  library "securerandom", "open3", "net-http", "json", "uri"
+  library "securerandom", "digest", "net-http", "json", "uri"
 end

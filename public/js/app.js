@@ -67,6 +67,31 @@
     if (event.target.matches("select[name=source]")) showSource(event.target);
   });
 
+  // A pasted YouTube cookie fetches its playlists into the form's
+  // [data-playlists], which the server draws as a fragment.
+  var playlistsTimer;
+  document.addEventListener("input", function (event) {
+    var cookie = event.target;
+    var fieldset = cookie.name === "cookie" && cookie.closest("fieldset");
+    var target = fieldset && fieldset.querySelector("[data-playlists]");
+    if (!target) return;
+
+    clearTimeout(playlistsTimer);
+    playlistsTimer = setTimeout(function () {
+      if (!cookie.value.trim()) return;
+
+      var body = new FormData();
+      body.append("cookie", cookie.value);
+      body.append("_csrf", target.dataset.csrf);
+      target.setAttribute("aria-busy", "true");
+      fetch(target.dataset.playlists, { method: "POST", body: body })
+        .then(function (response) { return response.text(); })
+        .then(function (html) { target.innerHTML = html; })
+        .catch(function () { target.textContent = "Could not reach rank-king to list your playlists."; })
+        .finally(function () { target.removeAttribute("aria-busy"); });
+    }, 300);
+  });
+
   document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll("select[name=source]").forEach(showSource);
   });

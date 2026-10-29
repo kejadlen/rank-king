@@ -14,8 +14,6 @@ module RankKing
       def view_template
         render Layout.new do
           render PageHeader.new(title: "Rank King") do
-            a(href: "/settings", class: "icon-button", data_size: "lg", aria_label: "Settings",
-              style: "--gl-icon: var(--rk-icon-settings)")
             a(href: "/lists/new", class: "btn", data_variant: "primary", data_size: "sm",
               style: "--gl-icon: var(--gl-icon-plus)") { "New list" }
           end
