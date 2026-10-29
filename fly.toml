@@ -22,7 +22,7 @@ primary_region = 'sjc'
 # a demo fails at Google's consent screen.
 [env]
   GOOGLE_CLIENT_ID = 'demo'
-  GOOGLE_CLIENT_SECRET = 'demo'
+  GOOGLE_CLIENT_SECRET_COMMAND = 'echo demo'
 
 [processes]
   app = 'rackup -o 0.0.0.0 demo.ru'
