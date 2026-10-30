@@ -8,8 +8,9 @@ module RankKing
   module Views
     module ListViews
       class Show < Phlex::HTML
-        def initialize(list:, csrf:, axis: nil)
+        def initialize(list:, source:, csrf:, axis: nil)
           @list = list
+          @source = source
           @csrf = csrf
           @axes = list.axes
           @selected = axis || @axes.first
@@ -35,7 +36,7 @@ module RankKing
         # rather than a new button on the screen. The source decides what
         # syncing looks like: its entry opens a dialog holding its own form.
         def render_menu
-          source = @list.source
+          source = @source
 
           button(class: "icon-button", data_size: "lg", popovertarget: "list-actions", aria_label: "List actions",
                  style: "--gl-icon: var(--rk-icon-more)")

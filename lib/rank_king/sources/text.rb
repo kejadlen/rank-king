@@ -8,11 +8,31 @@ module RankKing
     # over the list's items, which matches them by id, so there is nothing
     # to fetch and no table of its own.
     class Text
-      #: (List list) -> Text
-      def self.for(list) = new(list)
+      class Provider
+        #: () -> String
+        def title = "Typed list"
 
-      #: () -> String
-      def self.title = "Typed list"
+        #: (List list) -> Text
+        def source(list) = Text.new(list)
+
+        #: (csrf: Method) -> _Component
+        def fields(csrf:) = Views::Sources::TextFields.new
+
+        #: (Roda::RodaRequest r) -> void
+        def routes(r) = nil
+
+        # Adds the items typed into the new-list form, of which there must
+        # be at least two.
+        #: (List list, Hash[String, untyped] params) -> void
+        def create(list, params)
+          names = params["items"].to_s.lines.map(&:strip).reject(&:empty?)
+          raise Invalid, "A list needs at least two items." if names.size < 2
+
+          names.each do |name|
+            Item.create(list_id: list.id, name:)
+          end
+        end
+      end
 
       #: (List list) -> void
       def initialize(list)
@@ -46,7 +66,9 @@ module RankKing
             end
           end
 
-          added.each {|name| Item.create(list_id: @list.id, name:) }
+          added.each do |name|
+            Item.create(list_id: @list.id, name:)
+          end
         end
       end
     end

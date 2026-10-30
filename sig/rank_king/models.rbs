@@ -18,7 +18,6 @@ module RankKing
     def axes_dataset: () -> Sequel::Dataset[Axis]
     def source_kind: () -> String
     def synced_at: () -> Time?
-    def source: () -> Sources::_Source
   end
 
   class Item < Sequel::Model

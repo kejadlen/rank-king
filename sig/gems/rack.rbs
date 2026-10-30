@@ -1,0 +1,7 @@
+# Rack ships no signatures. web.rb calls only this of it directly.
+module Rack
+  module Utils
+    # Compares two strings in time that does not depend on where they differ.
+    def self.secure_compare: (String a, String b) -> bool
+  end
+end

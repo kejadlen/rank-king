@@ -5,6 +5,17 @@ require "phlex"
 module RankKing
   module Views
     module Sources
+      # The Text source's fields on the new-list form.
+      class TextFields < Phlex::HTML
+        def view_template
+          label(class: "field") do
+            plain "Items"
+            textarea(name: "items", rows: 6, required: true)
+            small { "One per line, at least two." }
+          end
+        end
+      end
+
       # The Text source's sync dialog: every item's name, editable in place,
       # and a box for new ones. It fills a <dialog> as Gloss lays one out:
       # header, body, footer, so the form is the body and the footer's

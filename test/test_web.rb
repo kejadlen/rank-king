@@ -51,6 +51,7 @@ class TestWeb < Minitest::Test
   def test_create_list_rejects_fewer_than_two_items
     create_list(name: "Solo", items: "OnlyOne")
     assert_equal 422, last_response.status
+    assert_equal "A list needs at least two items.\n", last_response.body
   end
 
   def test_create_list_without_axes

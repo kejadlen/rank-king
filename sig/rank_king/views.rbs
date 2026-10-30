@@ -13,16 +13,36 @@ module RankKing
         def initialize: (list: List, csrf: Method) -> void
         def call: () -> String
       end
+
+      class TextFields
+        def initialize: () -> void
+        def call: () -> String
+      end
+
+      class YouTube
+        def initialize: (list: List, csrf: Method) -> void
+        def call: () -> String
+      end
+
+      class YouTubeFields
+        def initialize: (csrf: Method) -> void
+        def call: () -> String
+      end
+
+      class YouTubePlaylists
+        def initialize: (playlists: Array[[String, String]]?, ?error: String?) -> void
+        def call: () -> String
+      end
     end
 
     module ListViews
       class New
-        def initialize: (sources: Hash[String, String], csrf: Method) -> void
+        def initialize: (sources: Array[[String, String, ::RankKing::Sources::_Component]], csrf: Method) -> void
         def call: () -> String
       end
 
       class Show
-        def initialize: (list: List, csrf: Method, ?axis: Axis?) -> void
+        def initialize: (list: List, source: ::RankKing::Sources::_Source, csrf: Method, ?axis: Axis?) -> void
         def call: () -> String
       end
 

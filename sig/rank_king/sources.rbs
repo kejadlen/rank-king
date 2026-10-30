@@ -1,6 +1,6 @@
 # Entry is a Data class, whose members the inline parser cannot read, and
-# the interfaces every source kind meets are named here so Sources.fetch
-# and List#source can be typed by them.
+# the interfaces every provider and source meets are named here so
+# Sources.providers can be typed by them.
 module RankKing
   module Sources
     class Entry
@@ -29,17 +29,31 @@ module RankKing
       def items_by_key: () -> Hash[String, Item]
 
       # Called by sync for each entry once its item is saved, to keep
-      # whatever the kind knows about the item in its own table.
+      # whatever the source knows about the item in its own table.
       def saved: (Item item, Entry entry) -> void
     end
 
-    # A source kind: a class in Sources, named by a list's source_kind.
-    interface _SourceClass
-      # The source for a list, configured from the kind's own table.
-      def for: (List list) -> _Source
+    # What a list is made from, holding whatever of the app's config its
+    # sources need, named by a list's source_kind.
+    interface _Provider
+      # The source for a list made from this provider.
+      def source: (List list) -> _Source
 
-      # What the kind is called where a list's source is chosen or shown.
+      # What the provider is called where a list's source is chosen or
+      # shown.
       def title: () -> String
+
+      # The provider's own fields on the new-list form, which may post to
+      # routes of their own as they are filled in.
+      def fields: (csrf: Method) -> _Component
+
+      # Sets a new list up from what those fields posted, raising Invalid,
+      # and the list is not made, when they are not enough to go on.
+      def create: (List list, Hash[String, untyped] params) -> void
+
+      # Mounts the routes the provider's own fields and dialogs post to,
+      # ahead of the app's.
+      def routes: (Roda::RodaRequest r) -> void
     end
 
     # A view component, as a source's form is.

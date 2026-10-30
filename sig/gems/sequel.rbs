@@ -17,7 +17,11 @@ module Sequel
   class Database
     def []: (Symbol table) -> Dataset[row]
 
-    def transaction: [T] () { () -> T } -> T
+    # Raising Rollback inside the block undoes it and returns nil.
+    def transaction: [T] () { () -> T } -> T?
+  end
+
+  class Rollback < StandardError
   end
 
   # Generic over what a row comes back as: a hash from a plain dataset,
@@ -29,12 +33,23 @@ module Sequel
 
     # Rows keyed by one column's value.
     def to_hash: (Symbol key) -> Hash[untyped, T]
+               | (Symbol key, Symbol value) -> Hash[untyped, untyped]
 
     def order: (*untyped columns) -> Dataset[T]
 
     def all: () -> Array[T]
 
     def first: () -> T?
+
+    # One column of the first row.
+    def get: (Symbol column) -> untyped
+
+    def insert: (**untyped values) -> Integer
+
+    # Inserts, replacing the row whose key conflicts.
+    def replace: (**untyped values) -> Integer
+
+    def join: (Symbol table, untyped conditions) -> Dataset[T]
 
     def select: (*Symbol columns) -> Dataset[row]
 
@@ -49,6 +64,8 @@ module Sequel
     def self.one_to_many: (Symbol name, **untyped options) -> void
 
     def self.many_to_one: (Symbol name, **untyped options) -> void
+
+    def self.one_to_one: (Symbol name, **untyped options) -> void
 
     def self.create: (**untyped values) -> instance
 

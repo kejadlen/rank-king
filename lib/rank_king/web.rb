@@ -4,6 +4,7 @@ require "roda"
 
 require_relative "models"
 require_relative "proxy_auth"
+require_relative "inner_tube"
 require_relative "views/home"
 require_relative "views/list/new"
 require_relative "views/list/show"
@@ -16,10 +17,18 @@ module RankKing
     plugin :static, %w[ /css /js /vendor ]
     plugin :sessions, secret: CONFIG.session_secret
     plugin :route_csrf, csrf_failure: :empty_403, check_request_methods: %w[POST]
-    plugin :error_handler, classes: [ProxyAuth::MissingLogin] do |e|
-      response.status = 401
+    plugin :error_handler, classes: [ProxyAuth::MissingLogin, InnerTube::Error, Sources::Invalid] do |e|
       response["Content-Type"] = "text/plain"
-      "Unauthorized: #{e.message}.\n"
+      if e.is_a?(Sources::Invalid)
+        response.status = 422
+        "#{e.message}\n"
+      elsif e.is_a?(InnerTube::Error)
+        response.status = 502
+        "YouTube: #{e.message}\n"
+      else
+        response.status = 401
+        "Unauthorized: #{e.message}.\n"
+      end
     end
 
     route do |r|
@@ -31,6 +40,8 @@ module RankKing
         Views::Home.new(lists: lists).call
       end
 
+      providers.each_value { |provider| provider.routes(r) }
+
       r.on "lists" do
         r.is do
           r.post do
@@ -38,32 +49,31 @@ module RankKing
             r.halt 422 if name.empty?
 
             source_kind = r.params["source"] || "Text"
-            r.halt 422 unless Sources::KINDS.include?(source_kind)
-
-            items_text = r.params["items"].to_s.strip
-            r.halt 422 if items_text.empty?
-
-            item_names = items_text.lines.map(&:strip).reject(&:empty?)
-            r.halt 422 if item_names.size < 2
+            provider = providers[source_kind] or r.halt 422
 
             axis_names = names_param(r.params["axes"])
 
-            list = DB.transaction do
+            # The source fills the list from its own fields, or raises and
+            # nothing is made.
+            list = DB.transaction {
               l = List.create(name: name, user_id: user.id, source_kind: source_kind)
-              item_names.each { |n| Item.create(list_id: l.id, name: n) }
-              axis_names.each { |n| Axis.create(list_id: l.id, name: n) }
+              provider.create(l, r.params)
+
+              axis_names.each do |n|
+                Axis.create(list_id: l.id, name: n)
+              end
               l
-            end
+            }
 
             r.redirect "/lists/#{list.id}"
           end
         end
 
         r.get "new" do
-          kinds = Sources::KINDS.to_h do |kind|
-            [kind, Sources.fetch(kind).title] #: [String, String]
-          end
-          Views::ListViews::New.new(sources: kinds, csrf: method(:csrf_token)).call
+          sources = providers.map { |name, provider|
+            [name, provider.title, provider.fields(csrf: method(:csrf_token))] #: [String, String, Sources::_Component]
+          }
+          Views::ListViews::New.new(sources:, csrf: method(:csrf_token)).call
         end
 
         r.on Integer do |list_id|
@@ -74,13 +84,13 @@ module RankKing
           r.is do
             r.get do
               axis = list.axes_dataset.where(id: r.params["axis"].to_i).first
-              Views::ListViews::Show.new(list: list, axis: axis, csrf: method(:csrf_token)).call
+              Views::ListViews::Show.new(list: list, source: source(list), axis: axis, csrf: method(:csrf_token)).call
             end
           end
 
           r.is "settings" do
             r.get do
-              source = Sources.fetch(list.source_kind).title
+              source = provider(list).title
               Views::ListViews::Settings.new(list: list, source: source, csrf: method(:csrf_token)).call
             end
 
@@ -104,7 +114,7 @@ module RankKing
 
           # Submitted from the source's own sync dialog.
           r.post "sync" do
-            list.source.sync(r.params)
+            source(list).sync(r.params)
             r.redirect "/lists/#{list.id}"
           end
 
@@ -152,6 +162,19 @@ module RankKing
     end
 
     private
+
+    # What the app runs with. Tests subclass the app to swap in fakes.
+    #: () -> Config
+    def config = CONFIG
+
+    #: () -> Hash[String, Sources::_Provider]
+    def providers = @providers ||= Sources.providers(config)
+
+    #: (List list) -> Sources::_Provider
+    def provider(list) = providers.fetch(list.source_kind)
+
+    #: (List list) -> Sources::_Source
+    def source(list) = provider(list).source(list)
 
     # Names from a repeated field (`axes[]`), one per tag.
     #: (untyped) -> Array[String]

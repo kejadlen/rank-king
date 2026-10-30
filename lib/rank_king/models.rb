@@ -19,7 +19,6 @@ module RankKing
     one_to_many :items, class: "RankKing::Item", conditions: { archived_at: nil }
     one_to_many :axes, class: "RankKing::Axis"
 
-    def source = Sources.fetch(source_kind).for(self)
 
     # Archived items too, which the items association leaves out.
     def before_destroy

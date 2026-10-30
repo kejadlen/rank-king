@@ -8,19 +8,25 @@ module RankKing
     # Signed in sig/rank_king/sources.rbs: a Data class.
     # @rbs skip
     Entry = Data.define(:key, :name)
+
+    # Raised by a provider's create when the new-list form did not post enough
+    # to set the list up; the message says what is missing.
+    class Invalid < StandardError; end
   end
 end
 
 require_relative "sources/text"
+require_relative "sources/youtube"
 
 module RankKing
   module Sources
-    # Every kind a list can be made from, in the order the new-list form
-    # offers them. A list keeps its kind for good.
-    KINDS = %w[Text].freeze #: Array[String]
-
-    # A list's source_kind names a class in this module.
-    #: (String kind) -> _SourceClass
-    def self.fetch(kind) = const_get(kind, false)
+    # Every provider a list can be made from, by the name a list's
+    # source_kind keeps, in the order the new-list form offers them. A list
+    # keeps its provider for good.
+    #: (Config config) -> Hash[String, _Provider]
+    def self.providers(config) = {
+      "Text" => Text::Provider.new,
+      "YouTube" => YouTube::Provider.new(config.inner_tube),
+    }
   end
 end

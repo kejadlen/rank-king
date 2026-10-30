@@ -29,18 +29,18 @@ module RankKing
               label(class: "field") do
                 plain "Source"
                 select(name: "source") do
-                  @sources.each { |value, name| option(value: value) { name } }
+                  @sources.each do |kind, title, _fields|
+                    option(value: kind) { title }
+                  end
                 end
                 small { "A list keeps its source." }
               end
 
-              # The chosen source's own fields. Each source gets one of these.
-              fieldset(data_source: "Text") do
-                label(class: "field") do
-                  plain "Items"
-                  textarea(name: "items", rows: 6, required: true)
-                  small { "One per line, at least two." }
-                end
+              # Each source's own fields. Only the chosen source's are
+              # enabled, so only they are checked and posted; app.js
+              # switches them when the dropdown changes.
+              @sources.each.with_index do |(kind, _title, fields), index|
+                fieldset(data_source: kind, disabled: index > 0, hidden: index > 0) { render fields }
               end
 
               render AxisTags.new

@@ -208,3 +208,27 @@ main > header [popovertarget] { anchor-name: --rk-list-actions; }
 }
 
 [data-matchup] + .btn { align-self: center; }
+
+/* -------------------- */
+/* Busy */
+/* -------------------- */
+
+/* A button whose form is still working (see data-busy in app.js) spins
+   where an icon would go. Gloss has no spinner, and a busy button never
+   carries an icon, so its ::before is free. */
+button[aria-busy="true"]::before {
+  content: "";
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-inline-end: var(--gl-space-2xs);
+  vertical-align: -0.125em;
+  border: 2px solid currentColor;
+  border-inline-end-color: transparent;
+  border-radius: 50%;
+  animation: rk-spin 0.8s linear infinite;
+}
+
+@keyframes rk-spin {
+  to { rotate: 1turn; }
+}
