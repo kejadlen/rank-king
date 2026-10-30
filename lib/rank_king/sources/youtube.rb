@@ -23,7 +23,7 @@ module RankKing
       def self.title = "YouTube playlist"
 
       #: (List list, _InnerTubeConfig config) -> YouTube
-      def self.for(list, config) = new(list, config)
+      def self.for(list, config) = new(list, config.inner_tube)
 
       #: (csrf: Method) -> _Component
       def self.fields(csrf:) = Views::Sources::YouTubeFields.new(csrf:)
@@ -59,13 +59,13 @@ module RankKing
         cookie = InnerTube.cookie(params["cookie"].to_s) or raise Invalid, "That cookie has no SAPISID to sign requests with."
 
         DB[TABLE].insert(list_id: list.id, playlist_id:)
-        new(list, config).fetch(cookie)
+        new(list, config.inner_tube).fetch(cookie)
       end
 
-      #: (List list, _InnerTubeConfig config) -> void
-      def initialize(list, config)
+      #: (List list, InnerTube inner_tube) -> void
+      def initialize(list, inner_tube)
         @list = list
-        @inner_tube = config.inner_tube
+        @inner_tube = inner_tube
       end
 
       #: () -> String
