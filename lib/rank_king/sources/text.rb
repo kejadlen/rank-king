@@ -8,27 +8,29 @@ module RankKing
     # over the list's items, which matches them by id, so there is nothing
     # to fetch and no table of its own.
     class Text
-      #: (List list, Config config) -> Text
-      def self.for(list, config) = new(list)
+      class Provider
+        #: () -> String
+        def title = "Typed list"
 
-      #: () -> String
-      def self.title = "Typed list"
+        #: (List list) -> Text
+        def source(list) = Text.new(list)
 
-      #: (csrf: Method) -> _Component
-      def self.fields(csrf:) = Views::Sources::TextFields.new
+        #: (csrf: Method) -> _Component
+        def fields(csrf:) = Views::Sources::TextFields.new
 
-      #: (Roda::RodaRequest r, Config config) -> void
-      def self.routes(r, config) = nil
+        #: (Roda::RodaRequest r) -> void
+        def routes(r) = nil
 
-      # Adds the items typed into the new-list form, of which there must
-      # be at least two.
-      #: (List list, Hash[String, untyped] params, Config config) -> void
-      def self.create(list, params, config)
-        names = params["items"].to_s.lines.map(&:strip).reject(&:empty?)
-        raise Invalid, "A list needs at least two items." if names.size < 2
+        # Adds the items typed into the new-list form, of which there must
+        # be at least two.
+        #: (List list, Hash[String, untyped] params) -> void
+        def create(list, params)
+          names = params["items"].to_s.lines.map(&:strip).reject(&:empty?)
+          raise Invalid, "A list needs at least two items." if names.size < 2
 
-        names.each do |name|
-          Item.create(list_id: list.id, name:)
+          names.each do |name|
+            Item.create(list_id: list.id, name:)
+          end
         end
       end
 

@@ -40,7 +40,7 @@ module RankKing
         Views::Home.new(lists: lists).call
       end
 
-      Sources::KINDS.each { |kind| Sources.fetch(kind).routes(r, config) }
+      providers.each_value { |provider| provider.routes(r) }
 
       r.on "lists" do
         r.is do
@@ -49,7 +49,7 @@ module RankKing
             r.halt 422 if name.empty?
 
             source_kind = r.params["source"] || "Text"
-            r.halt 422 unless Sources::KINDS.include?(source_kind)
+            provider = providers[source_kind] or r.halt 422
 
             axis_names = names_param(r.params["axes"])
 
@@ -57,7 +57,7 @@ module RankKing
             # nothing is made.
             list = DB.transaction {
               l = List.create(name: name, user_id: user.id, source_kind: source_kind)
-              Sources.fetch(source_kind).create(l, r.params, config)
+              provider.create(l, r.params)
 
               axis_names.each do |n|
                 Axis.create(list_id: l.id, name: n)
@@ -70,11 +70,10 @@ module RankKing
         end
 
         r.get "new" do
-          kinds = Sources::KINDS.map { |kind|
-            source = Sources.fetch(kind)
-            [kind, source.title, source.fields(csrf: method(:csrf_token))] #: [String, String, Sources::_Component]
+          sources = providers.map { |name, provider|
+            [name, provider.title, provider.fields(csrf: method(:csrf_token))] #: [String, String, Sources::_Component]
           }
-          Views::ListViews::New.new(sources: kinds, csrf: method(:csrf_token)).call
+          Views::ListViews::New.new(sources:, csrf: method(:csrf_token)).call
         end
 
         r.on Integer do |list_id|
@@ -91,7 +90,7 @@ module RankKing
 
           r.is "settings" do
             r.get do
-              source = Sources.fetch(list.source_kind).title
+              source = provider(list).title
               Views::ListViews::Settings.new(list: list, source: source, csrf: method(:csrf_token)).call
             end
 
@@ -168,8 +167,14 @@ module RankKing
     #: () -> Config
     def config = CONFIG
 
+    #: () -> Hash[String, Sources::_Provider]
+    def providers = @providers ||= Sources.providers(config)
+
+    #: (List list) -> Sources::_Provider
+    def provider(list) = providers.fetch(list.source_kind)
+
     #: (List list) -> Sources::_Source
-    def source(list) = Sources.fetch(list.source_kind).for(list, config)
+    def source(list) = provider(list).source(list)
 
     # Names from a repeated field (`axes[]`), one per tag.
     #: (untyped) -> Array[String]

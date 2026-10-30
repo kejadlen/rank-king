@@ -6,7 +6,7 @@ module RankKing
   # Reconciles a list's items with a fresh snapshot of entries from its
   # source. Items missing from the snapshot are archived rather than deleted
   # so their results survive, and come back with their history if they
-  # reappear. A kind that fetches its items calls this from its own sync.
+  # reappear. A source that fetches its items calls this from its own sync.
   module Sync
     # Signed in sig/rank_king/sync.rbs: a Data class.
     # @rbs skip

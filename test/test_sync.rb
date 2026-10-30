@@ -10,7 +10,7 @@ class TestSync < Minitest::Test
   include RankKing
 
   # A synced source that keeps each item's key in memory, standing in for a
-  # kind that keeps its keys in its own table keyed by item_id.
+  # source that keeps its keys in its own table keyed by item_id.
   class FakeSource
     attr_reader :calls
 

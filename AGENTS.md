@@ -26,8 +26,8 @@ lib/rank_king/     — app code
   db.rb            — Sequel connection + migration runner
   models.rb        — Sequel models (User, List, Item, Axis, Result)
   inner_tube.rb    — YouTube client: InnerTube, signed with a pasted browser cookie
-  sources.rb       — Sources.fetch: a list's source_kind names a class in Sources
-  sources/         — one class per source kind
+  sources.rb       — Sources.providers: a list's source_kind names one of them
+  sources/         — one class per source, each with the Provider that makes it
   sync.rb          — reconciles a list's items with a fresh snapshot from a fetching source
   proxy_auth.rb    — reads the login from Remote-User
   seed.rb          — sample lists for the stub login (demo.ru)
@@ -51,7 +51,7 @@ fly.toml           — Fly config for the main demo and PR previews
 ## Domain model
 
 - **User** has many Lists; identified by the login on the `Remote-User` header
-- **List** belongs to a User and has many Items and Axes, and one source (`source_kind` names a class in `Sources`). Each source renders its own sync dialog on the list page and applies what it posts: `Text`'s edits items by id, and a kind that fetches calls `Sync.call`. A fetching kind keeps its config in its own table keyed by `list_id` and its per-item details in a table keyed by `item_id`
+- **List** belongs to a User and has many Items and Axes, and one source (`source_kind` names its provider in `Sources.providers`). Each source renders its own sync dialog on the list page and applies what it posts: `Text`'s edits items by id, and a source that fetches calls `Sync.call`. A fetching source keeps its config in its own table keyed by `list_id` and its per-item details in a table keyed by `item_id`
 - Sources: `Text` (typed in, edited by id) and `YouTube` (follows one of the owner's playlists, Watch Later included, with a youtube.com cookie pasted for each fetch and never kept; `youtube_sources` by `list_id`, `youtube_items` by `item_id`)
 - **Item** belongs to a List; removed items, and items missing from the latest sync, are archived (`archived_at`) and hidden everywhere
 - **Axis** belongs to a List, has many Results
@@ -87,9 +87,8 @@ fly.toml           — Fly config for the main demo and PR previews
 - `SESSION_SECRET` — session signing key (auto-generated if unset)
 
 Tests set `DATABASE_URL=:memory:` in `test/test_helper.rb`. Clients that
-talk to the outside world live on `Config`, which the app hands to every
-source; a source types the argument as an interface naming only what it
-reads (`Sources::_InnerTubeConfig`). The YouTube tests subclass the app
+talk to the outside world live on `Config`; `Sources.providers` hands
+each provider only the clients it needs. The YouTube tests subclass the app
 to override `config` with an `InnerTube` subclass whose `request`
 answers without the network.
 
@@ -127,12 +126,13 @@ rank-king never stores it.
   screen's own actions). List actions go in the list's ⋯ menu and list
   options in its settings form, so a new feature adds an entry there
   rather than a new button or screen.
-- A list's source is fixed when it is made. `Sources::KINDS` lists the
-  kinds the new-list form offers, and each kind's `title` names it there
-  and in settings. Its sync dialog opens from the list's ⋯ menu. Each
-  kind also renders its own fields on the new-list form (`fields`),
-  sets the new list up from them (`create`), and mounts any routes those
-  fields post to (`routes`).
+- A list's source is fixed when it is made. `Sources.providers` lists
+  the providers the new-list form offers, and each provider's `title`
+  names it there and in settings. Its sync dialog opens from the list's ⋯
+  menu. Each provider also renders its own fields on the new-list form
+  (`fields`), sets the new list up from them (`create`), mounts any
+  routes those fields post to (`routes`), and opens a list's source
+  (`source`).
 - Every request needs a `Remote-User` header or it gets a 401. That is safe only because a proxy (Tailscale identity) writes the header. `StubLogin` fills it in for `demo.ru` (dev server, Fly apps) and nowhere else: never in `config.ru`, and never in front of real data.
 - Lists are private to their owner (404 for anyone else)
 - Config is a frozen `Data.define` value object

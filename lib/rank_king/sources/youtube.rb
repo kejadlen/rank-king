@@ -19,47 +19,54 @@ module RankKing
       # playlists.
       PLAYLISTS_PATH = "/youtube/playlists"
 
-      #: () -> String
-      def self.title = "YouTube playlist"
-
-      #: (List list, _InnerTubeConfig config) -> YouTube
-      def self.for(list, config) = new(list, config.inner_tube)
-
-      #: (csrf: Method) -> _Component
-      def self.fields(csrf:) = Views::Sources::YouTubeFields.new(csrf:)
-
-      # The new-list form's playlist picker, drawn from a pasted cookie. It
-      # is a POST so the cookie stays out of URLs and logs.
-      #: (Roda::RodaRequest r, _InnerTubeConfig config) -> void
-      def self.routes(r, config)
-        r.post PLAYLISTS_PATH.delete_prefix("/") do
-          playlists(r.params["cookie"], config).call
+      class Provider
+        #: (InnerTube inner_tube) -> void
+        def initialize(inner_tube)
+          @inner_tube = inner_tube
         end
-      end
 
-      # The choice of playlists a pasted cookie opens. Whatever stops it
-      # is said in the choice's place.
-      #: (untyped text, _InnerTubeConfig config) -> _Component
-      def self.playlists(text, config)
-        Views::Sources::YouTubePlaylists.new(playlists: config.inner_tube.playlists(cookie(text)))
-      rescue InnerTube::Error => e
-        Views::Sources::YouTubePlaylists.new(playlists: nil, error: e.message)
+        #: () -> String
+        def title = "YouTube playlist"
+
+        #: (List list) -> YouTube
+        def source(list) = YouTube.new(list, @inner_tube)
+
+        #: (csrf: Method) -> _Component
+        def fields(csrf:) = Views::Sources::YouTubeFields.new(csrf:)
+
+        # The new-list form's playlist picker, drawn from a pasted cookie. It
+        # is a POST so the cookie stays out of URLs and logs.
+        #: (Roda::RodaRequest r) -> void
+        def routes(r)
+          r.post PLAYLISTS_PATH.delete_prefix("/") do
+            playlists(r.params["cookie"]).call
+          end
+        end
+
+        # The choice of playlists a pasted cookie opens. Whatever stops it
+        # is said in the choice's place.
+        #: (untyped text) -> _Component
+        def playlists(text)
+          Views::Sources::YouTubePlaylists.new(playlists: @inner_tube.playlists(YouTube.cookie(text)))
+        rescue InnerTube::Error => e
+          Views::Sources::YouTubePlaylists.new(playlists: nil, error: e.message)
+        end
+
+        # Follows the playlist chosen on the new-list form and fetches it
+        # with the cookie pasted there.
+        #: (List list, Hash[String, untyped] params) -> void
+        def create(list, params)
+          playlist_id = params["playlist"].to_s[/\A[\w-]+\z/] or raise Invalid, "Choose a playlist to follow."
+          cookie = InnerTube.cookie(params["cookie"].to_s) or raise Invalid, "That cookie has no SAPISID to sign requests with."
+
+          DB[TABLE].insert(list_id: list.id, playlist_id:)
+          source(list).fetch(cookie)
+        end
       end
 
       #: (untyped text) -> String
       def self.cookie(text)
         InnerTube.cookie(text.to_s) or raise InnerTube::Error, "That cookie has no SAPISID to sign requests with."
-      end
-
-      # Follows the playlist chosen on the new-list form and fetches it
-      # with the cookie pasted there.
-      #: (List list, Hash[String, untyped] params, _InnerTubeConfig config) -> void
-      def self.create(list, params, config)
-        playlist_id = params["playlist"].to_s[/\A[\w-]+\z/] or raise Invalid, "Choose a playlist to follow."
-        cookie = InnerTube.cookie(params["cookie"].to_s) or raise Invalid, "That cookie has no SAPISID to sign requests with."
-
-        DB[TABLE].insert(list_id: list.id, playlist_id:)
-        new(list, config.inner_tube).fetch(cookie)
       end
 
       #: (List list, InnerTube inner_tube) -> void
