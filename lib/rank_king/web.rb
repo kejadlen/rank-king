@@ -17,9 +17,12 @@ module RankKing
     plugin :static, %w[ /css /js /vendor ]
     plugin :sessions, secret: CONFIG.session_secret
     plugin :route_csrf, csrf_failure: :empty_403, check_request_methods: %w[POST]
-    plugin :error_handler, classes: [ProxyAuth::MissingLogin, InnerTube::Error] do |e|
+    plugin :error_handler, classes: [ProxyAuth::MissingLogin, InnerTube::Error, Sources::Invalid] do |e|
       response["Content-Type"] = "text/plain"
-      if e.is_a?(InnerTube::Error)
+      if e.is_a?(Sources::Invalid)
+        response.status = 422
+        "#{e.message}\n"
+      elsif e.is_a?(InnerTube::Error)
         response.status = 502
         "YouTube: #{e.message}\n"
       else
@@ -50,18 +53,17 @@ module RankKing
 
             axis_names = names_param(r.params["axes"])
 
-            # The source fills the list from its own fields, or turns it
-            # down and nothing is made.
+            # The source fills the list from its own fields, or raises and
+            # nothing is made.
             list = DB.transaction {
               l = List.create(name: name, user_id: user.id, source_kind: source_kind)
-              raise Sequel::Rollback unless Sources.fetch(source_kind).create(l, r.params, config)
+              Sources.fetch(source_kind).create(l, r.params, config)
 
               axis_names.each do |n|
                 Axis.create(list_id: l.id, name: n)
               end
               l
             }
-            r.halt 422 unless list
 
             r.redirect "/lists/#{list.id}"
           end

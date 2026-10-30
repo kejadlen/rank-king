@@ -190,6 +190,7 @@ class TestYouTube < Minitest::Test
   def test_create_needs_a_cookie
     create_list(playlist: PLAYLIST, cookie: "SID=sid")
     assert_equal 422, last_response.status
+    assert_equal "That cookie has no SAPISID to sign requests with.\n", last_response.body
     assert_equal 0, RankKing::List.count
     assert_empty @inner_tube.calls
   end
@@ -197,6 +198,7 @@ class TestYouTube < Minitest::Test
   def test_create_needs_a_playlist
     create_list(playlist: "not a playlist")
     assert_equal 422, last_response.status
+    assert_equal "Choose a playlist to follow.\n", last_response.body
     assert_equal 0, RankKing::List.count
   end
 

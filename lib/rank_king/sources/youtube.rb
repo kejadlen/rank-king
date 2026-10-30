@@ -53,15 +53,13 @@ module RankKing
 
       # Follows the playlist chosen on the new-list form and fetches it
       # with the cookie pasted there.
-      #: (List list, Hash[String, untyped] params, _InnerTubeConfig config) -> bool
+      #: (List list, Hash[String, untyped] params, _InnerTubeConfig config) -> void
       def self.create(list, params, config)
-        playlist_id = params["playlist"].to_s[/\A[\w-]+\z/]
-        cookie = InnerTube.cookie(params["cookie"].to_s)
-        return false unless playlist_id && cookie
+        playlist_id = params["playlist"].to_s[/\A[\w-]+\z/] or raise Invalid, "Choose a playlist to follow."
+        cookie = InnerTube.cookie(params["cookie"].to_s) or raise Invalid, "That cookie has no SAPISID to sign requests with."
 
         DB[TABLE].insert(list_id: list.id, playlist_id:)
         new(list, config).fetch(cookie)
-        true
       end
 
       #: (List list, _InnerTubeConfig config) -> void

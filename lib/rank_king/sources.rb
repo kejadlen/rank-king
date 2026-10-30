@@ -8,6 +8,10 @@ module RankKing
     # Signed in sig/rank_king/sources.rbs: a Data class.
     # @rbs skip
     Entry = Data.define(:key, :name)
+
+    # Raised by a kind's create when the new-list form did not post enough
+    # to set the list up; the message says what is missing.
+    class Invalid < StandardError; end
   end
 end
 

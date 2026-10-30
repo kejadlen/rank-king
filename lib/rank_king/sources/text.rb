@@ -22,15 +22,14 @@ module RankKing
 
       # Adds the items typed into the new-list form, of which there must
       # be at least two.
-      #: (List list, Hash[String, untyped] params, Config config) -> bool
+      #: (List list, Hash[String, untyped] params, Config config) -> void
       def self.create(list, params, config)
         names = params["items"].to_s.lines.map(&:strip).reject(&:empty?)
-        return false if names.size < 2
+        raise Invalid, "A list needs at least two items." if names.size < 2
 
         names.each do |name|
           Item.create(list_id: list.id, name:)
         end
-        true
       end
 
       #: (List list) -> void
