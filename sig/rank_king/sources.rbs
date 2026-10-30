@@ -35,9 +35,9 @@ module RankKing
 
     # A source kind: a class in Sources, named by a list's source_kind.
     interface _SourceClass
-      # The source for a list, configured from the kind's own table. Every
-      # kind is handed the app's InnerTube client, which only YouTube uses.
-      def for: (List list, innertube: InnerTube) -> _Source
+      # The source for a list, configured from the kind's own table and
+      # the app's config.
+      def for: (List list, Config config) -> _Source
 
       # What the kind is called where a list's source is chosen or shown.
       def title: () -> String
@@ -48,7 +48,12 @@ module RankKing
 
       # Sets a new list up from what those fields posted: false, and the
       # list is not made, when they are not enough to go on.
-      def create: (List list, Hash[String, untyped] params, innertube: InnerTube) -> bool
+      def create: (List list, Hash[String, untyped] params, Config config) -> bool
+    end
+
+    # All a YouTube source reads off the app's config.
+    interface _InnerTubeConfig
+      def inner_tube: () -> InnerTube
     end
 
     # A view component, as a source's form is.

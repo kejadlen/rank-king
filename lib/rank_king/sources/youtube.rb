@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../innertube"
+require_relative "../inner_tube"
 require_relative "../sync"
 require_relative "../views/sources/youtube"
 
@@ -22,17 +22,17 @@ module RankKing
       #: () -> String
       def self.title = "YouTube playlist"
 
-      #: (List list, innertube: InnerTube) -> YouTube
-      def self.for(list, innertube:) = new(list, innertube:)
+      #: (List list, _InnerTubeConfig config) -> YouTube
+      def self.for(list, config) = new(list, config)
 
       #: (csrf: Method) -> _Component
       def self.fields(csrf:) = Views::Sources::YouTubeFields.new(csrf:)
 
       # The choice of playlists a pasted cookie opens. Whatever stops it
       # is said in the choice's place.
-      #: (String text, innertube: InnerTube) -> _Component
-      def self.playlists(text, innertube:)
-        Views::Sources::YouTubePlaylists.new(playlists: innertube.playlists(cookie(text)))
+      #: (untyped text, _InnerTubeConfig config) -> _Component
+      def self.playlists(text, config)
+        Views::Sources::YouTubePlaylists.new(playlists: config.inner_tube.playlists(cookie(text)))
       rescue InnerTube::Error => e
         Views::Sources::YouTubePlaylists.new(playlists: nil, error: e.message)
       end
@@ -44,21 +44,21 @@ module RankKing
 
       # Follows the playlist chosen on the new-list form and fetches it
       # with the cookie pasted there.
-      #: (List list, Hash[String, untyped] params, innertube: InnerTube) -> bool
-      def self.create(list, params, innertube:)
+      #: (List list, Hash[String, untyped] params, _InnerTubeConfig config) -> bool
+      def self.create(list, params, config)
         playlist_id = params["playlist"].to_s[/\A[\w-]+\z/]
         cookie = InnerTube.cookie(params["cookie"].to_s)
         return false unless playlist_id && cookie
 
         DB[TABLE].insert(list_id: list.id, playlist_id:)
-        new(list, innertube:).fetch(cookie)
+        new(list, config).fetch(cookie)
         true
       end
 
-      #: (List list, innertube: InnerTube) -> void
-      def initialize(list, innertube:)
+      #: (List list, _InnerTubeConfig config) -> void
+      def initialize(list, config)
         @list = list
-        @innertube = innertube
+        @inner_tube = config.inner_tube
       end
 
       #: () -> String
@@ -76,7 +76,7 @@ module RankKing
       #: (String cookie) -> Sync::Summary
       def fetch(cookie)
         # Kept for saved, which caches each video's details by its item.
-        @videos = @innertube.playlist_videos(cookie, playlist_id).uniq(&:id).to_h { |video|
+        @videos = @inner_tube.playlist_videos(cookie, playlist_id).uniq(&:id).to_h { |video|
           [video.id, video] #: [String, InnerTube::Video]
         }
         entries = @videos.each_value.map { |video| Entry.new(key: video.id, name: video.title) }

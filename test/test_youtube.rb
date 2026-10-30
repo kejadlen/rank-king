@@ -10,11 +10,11 @@ require_relative "../lib/rank_king/web"
 class TestYouTube < Minitest::Test
   include Rack::Test::Methods
 
-  # The app, with the fake InnerTube in place of the real one.
+  # The app, with the fake InnerTube in its config.
   class App < RankKing::Web
-    singleton_class.attr_accessor :innertube
+    singleton_class.attr_accessor :inner_tube
 
-    private def innertube = self.class.innertube
+    private def config = RankKing::CONFIG.with(inner_tube: self.class.inner_tube)
   end
 
   def app = App.app
@@ -102,8 +102,8 @@ class TestYouTube < Minitest::Test
     RankKing::DB[:lists].delete
     RankKing::DB[:users].delete
 
-    @innertube = FakeInnerTube.new
-    App.innertube = @innertube
+    @inner_tube = FakeInnerTube.new
+    App.inner_tube = @inner_tube
   end
 
   def test_new_list_asks_for_a_cookie_before_the_playlists
@@ -112,7 +112,7 @@ class TestYouTube < Minitest::Test
     assert_includes last_response.body, %(<textarea name="cookie")
     assert_includes last_response.body, %(data-playlists="/youtube/playlists")
     refute_includes last_response.body, %(name="playlist")
-    assert_empty @innertube.calls
+    assert_empty @inner_tube.calls
   end
 
   def test_a_pasted_cookie_lists_the_playlists
@@ -122,29 +122,29 @@ class TestYouTube < Minitest::Test
     assert_includes last_response.body, %(<option value="WL">Watch later</option>)
     assert_includes last_response.body, %(<option value="PLabc123">Music</option>)
     refute_includes last_response.body, "<html"
-    assert_equal [COOKIE, { browseId: "FEplaylist_aggregation" }], @innertube.calls.last
+    assert_equal [COOKIE, { browseId: "FEplaylist_aggregation" }], @inner_tube.calls.last
   end
 
   def test_listing_playlists_needs_the_form_token
     post "/youtube/playlists", { cookie: COOKIE }
     assert_equal 403, last_response.status
-    assert_empty @innertube.calls
+    assert_empty @inner_tube.calls
   end
 
   def test_a_cookie_with_nothing_to_sign_with_lists_nothing
     playlists("SID=sid; HSID=hsid")
     assert_includes last_response.body, "no SAPISID"
-    assert_empty @innertube.calls
+    assert_empty @inner_tube.calls
   end
 
   def test_says_when_there_are_no_playlists
-    @innertube.user_playlists = []
+    @inner_tube.user_playlists = []
     playlists(COOKIE)
     assert_includes last_response.body, "no playlists yet"
   end
 
   def test_says_when_youtube_signed_the_cookie_out
-    @innertube.signed_out = true
+    @inner_tube.signed_out = true
     playlists(COOKIE)
     assert last_response.ok?
     assert_includes last_response.body, "YouTube signed the cookie out."
@@ -159,7 +159,7 @@ class TestYouTube < Minitest::Test
   end
 
   def test_create_a_list_from_a_playlist
-    @innertube.videos = [["v1", "First"], ["v2", nil], ["v3", "Third"], ["v4", "Fourth"], ["v1", "First again"]]
+    @inner_tube.videos = [["v1", "First"], ["v2", nil], ["v3", "Third"], ["v4", "Fourth"], ["v1", "First again"]]
 
     create_list(playlist: PLAYLIST)
     assert last_response.redirect?
@@ -175,23 +175,23 @@ class TestYouTube < Minitest::Test
     assert_equal "A channel", first[:channel_title]
     assert_equal "https://i.ytimg.com/vi/v1/mqdefault.jpg", first[:thumbnail_url]
 
-    assert_equal [{ browseId: "VLPLabc123" }, { continuation: "1" }, { continuation: "2" }], @innertube.calls.map(&:last)
-    assert_equal [COOKIE], @innertube.calls.map(&:first).uniq
+    assert_equal [{ browseId: "VLPLabc123" }, { continuation: "1" }, { continuation: "2" }], @inner_tube.calls.map(&:last)
+    assert_equal [COOKIE], @inner_tube.calls.map(&:first).uniq
   end
 
   def test_create_a_list_from_watch_later
-    @innertube.videos = [["v1", "First"], ["v2", "Second"]]
+    @inner_tube.videos = [["v1", "First"], ["v2", "Second"]]
     create_list(playlist: "WL")
 
     assert_equal %w[First Second], names(RankKing::List.first)
-    assert_equal({ browseId: "VLWL" }, @innertube.calls.last.last)
+    assert_equal({ browseId: "VLWL" }, @inner_tube.calls.last.last)
   end
 
   def test_create_needs_a_cookie
     create_list(playlist: PLAYLIST, cookie: "SID=sid")
     assert_equal 422, last_response.status
     assert_equal 0, RankKing::List.count
-    assert_empty @innertube.calls
+    assert_empty @inner_tube.calls
   end
 
   def test_create_needs_a_playlist
@@ -201,28 +201,28 @@ class TestYouTube < Minitest::Test
   end
 
   def test_sync_adds_archives_and_restores_by_video
-    @innertube.videos = [["v1", "First"], ["v2", "Second"]]
+    @inner_tube.videos = [["v1", "First"], ["v2", "Second"]]
     create_list(playlist: PLAYLIST)
     list = RankKing::List.first
     first, second = list.items_dataset.order(:id).all
 
-    @innertube.videos = [["v1", "First, renamed"], ["v3", "Third"]]
+    @inner_tube.videos = [["v1", "First, renamed"], ["v3", "Third"]]
     sync(list, cookie: "SAPISID=fresh")
     assert last_response.redirect?
     assert_equal ["First, renamed", "Third"], names(list)
     refute_nil second.reload.archived_at
     assert_equal "First, renamed", first.reload.name
     assert_equal "First, renamed", RankKing::DB[:youtube_items].first(item_id: first.id)[:title]
-    assert_equal "SAPISID=fresh", @innertube.calls.last.first
+    assert_equal "SAPISID=fresh", @inner_tube.calls.last.first
 
-    @innertube.videos = [["v2", "Second"]]
+    @inner_tube.videos = [["v2", "Second"]]
     sync(list)
     assert_equal %w[Second], names(list)
     assert_nil second.reload.archived_at
   end
 
   def test_sync_dialog_asks_for_a_cookie_and_shows_progress
-    @innertube.videos = [["v1", "First"], ["v2", "Second"]]
+    @inner_tube.videos = [["v1", "First"], ["v2", "Second"]]
     create_list(playlist: PLAYLIST)
 
     get "/lists/#{RankKing::List.first.id}"
@@ -232,23 +232,23 @@ class TestYouTube < Minitest::Test
   end
 
   def test_sync_needs_a_cookie
-    @innertube.videos = [["v1", "First"], ["v2", "Second"]]
+    @inner_tube.videos = [["v1", "First"], ["v2", "Second"]]
     create_list(playlist: PLAYLIST)
     list = RankKing::List.first
-    @innertube.calls.clear
+    @inner_tube.calls.clear
 
     sync(list, cookie: "")
     assert_equal 502, last_response.status
     assert_includes last_response.body, "no SAPISID"
-    assert_empty @innertube.calls
+    assert_empty @inner_tube.calls
   end
 
   def test_a_signed_out_cookie_archives_nothing
-    @innertube.videos = [["v1", "First"], ["v2", "Second"]]
+    @inner_tube.videos = [["v1", "First"], ["v2", "Second"]]
     create_list(playlist: PLAYLIST)
     list = RankKing::List.first
 
-    @innertube.signed_out = true
+    @inner_tube.signed_out = true
     sync(list)
     assert_equal 502, last_response.status
     assert_includes last_response.body, "YouTube: YouTube signed the cookie out."
@@ -256,11 +256,11 @@ class TestYouTube < Minitest::Test
   end
 
   def test_youtube_errors_are_reported
-    @innertube.videos = [["v1", "First"], ["v2", "Second"]]
+    @inner_tube.videos = [["v1", "First"], ["v2", "Second"]]
     create_list(playlist: PLAYLIST)
     list = RankKing::List.first
 
-    @innertube.error = "Request contains an invalid argument."
+    @inner_tube.error = "Request contains an invalid argument."
     sync(list)
     assert_equal 502, last_response.status
     assert_includes last_response.body, "Request contains an invalid argument."
@@ -268,7 +268,7 @@ class TestYouTube < Minitest::Test
   end
 
   def test_deleting_a_youtube_list
-    @innertube.videos = [["v1", "First"], ["v2", "Second"]]
+    @inner_tube.videos = [["v1", "First"], ["v2", "Second"]]
     create_list(playlist: PLAYLIST)
     list = RankKing::List.first
 

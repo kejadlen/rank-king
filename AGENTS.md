@@ -25,7 +25,7 @@ lib/rank_king/     — app code
   config.rb        — Config data class, reads from ENV
   db.rb            — Sequel connection + migration runner
   models.rb        — Sequel models (User, List, Item, Axis, Result)
-  innertube.rb     — YouTube client: InnerTube, signed with a pasted browser cookie
+  inner_tube.rb    — YouTube client: InnerTube, signed with a pasted browser cookie
   sources.rb       — Sources.fetch: a list's source_kind names a class in Sources
   sources/         — one class per source kind
   sync.rb          — reconciles a list's items with a fresh snapshot from a fetching source
@@ -86,10 +86,12 @@ fly.toml           — Fly config for the main demo and PR previews
 - `DATABASE_URL` — SQLite path (default: `:memory:`)
 - `SESSION_SECRET` — session signing key (auto-generated if unset)
 
-Tests set `DATABASE_URL=:memory:` in `test/test_helper.rb`. The app
-hands its `innertube` client to every source; the YouTube tests subclass
-the app to return an `InnerTube` subclass whose `request` answers
-without the network.
+Tests set `DATABASE_URL=:memory:` in `test/test_helper.rb`. Clients that
+talk to the outside world live on `Config`, which the app hands to every
+source; a source types the argument as an interface naming only what it
+reads (`Sources::_InnerTubeConfig`). The YouTube tests subclass the app
+to override `config` with an `InnerTube` subclass whose `request`
+answers without the network.
 
 ## YouTube
 

@@ -4,7 +4,7 @@ require "roda"
 
 require_relative "models"
 require_relative "proxy_auth"
-require_relative "innertube"
+require_relative "inner_tube"
 require_relative "views/home"
 require_relative "views/list/new"
 require_relative "views/list/show"
@@ -40,7 +40,7 @@ module RankKing
       # A fragment for the new-list form: the playlists a pasted cookie
       # opens. It is a POST so the cookie stays out of URLs and logs.
       r.post "youtube", "playlists" do
-        Sources::YouTube.playlists(r.params["cookie"], innertube:).call
+        Sources::YouTube.playlists(r.params["cookie"], config).call
       end
 
       r.on "lists" do
@@ -58,7 +58,7 @@ module RankKing
             # down and nothing is made.
             list = DB.transaction {
               l = List.create(name: name, user_id: user.id, source_kind: source_kind)
-              raise Sequel::Rollback unless Sources.fetch(source_kind).create(l, r.params, innertube:)
+              raise Sequel::Rollback unless Sources.fetch(source_kind).create(l, r.params, config)
 
               axis_names.each do |n|
                 Axis.create(list_id: l.id, name: n)
@@ -166,13 +166,12 @@ module RankKing
 
     private
 
-    # The InnerTube client every route and source goes through. Tests
-    # subclass the app to hand back a fake one.
-    #: () -> InnerTube
-    def innertube = InnerTube.new
+    # What the app runs with. Tests subclass the app to swap in fakes.
+    #: () -> Config
+    def config = CONFIG
 
     #: (List list) -> Sources::_Source
-    def source(list) = Sources.fetch(list.source_kind).for(list, innertube:)
+    def source(list) = Sources.fetch(list.source_kind).for(list, config)
 
     # Names from a repeated field (`axes[]`), one per tag.
     #: (untyped) -> Array[String]

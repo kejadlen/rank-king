@@ -2,11 +2,14 @@
 
 require "securerandom"
 
+require_relative "inner_tube"
+
 module RankKing
   # @rbs skip
   Config = Data.define(
     :database_url,
     :session_secret,
+    :inner_tube,
   )
 
   class Config
@@ -20,6 +23,7 @@ module RankKing
       new(
         database_url: env.fetch("DATABASE_URL", ":memory:"),
         session_secret: env.fetch("SESSION_SECRET") { SecureRandom.hex(64) },
+        inner_tube: InnerTube.new,
       )
     end
   end

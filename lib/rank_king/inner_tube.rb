@@ -17,7 +17,7 @@ module RankKing
     class Error < StandardError; end
 
     # A video in a playlist, as YouTube describes it.
-    # Signed in sig/rank_king/innertube.rbs: a Data class.
+    # Signed in sig/rank_king/inner_tube.rbs: a Data class.
     # @rbs skip
     Video = Data.define(:id, :title, :channel_title, :thumbnail_url)
 

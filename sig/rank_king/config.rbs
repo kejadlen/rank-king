@@ -5,7 +5,8 @@ module RankKing
   class Config
     attr_reader database_url: String
     attr_reader session_secret: String
+    attr_reader inner_tube: InnerTube
 
-    def self.new: (database_url: String, session_secret: String) -> instance
+    def self.new: (database_url: String, session_secret: String, inner_tube: InnerTube) -> instance
   end
 end

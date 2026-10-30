@@ -8,8 +8,8 @@ module RankKing
     # over the list's items, which matches them by id, so there is nothing
     # to fetch and no table of its own.
     class Text
-      #: (List list, innertube: InnerTube) -> Text
-      def self.for(list, innertube:) = new(list)
+      #: (List list, Config config) -> Text
+      def self.for(list, config) = new(list)
 
       #: () -> String
       def self.title = "Typed list"
@@ -19,8 +19,8 @@ module RankKing
 
       # Adds the items typed into the new-list form, of which there must
       # be at least two.
-      #: (List list, Hash[String, untyped] params, innertube: InnerTube) -> bool
-      def self.create(list, params, innertube:)
+      #: (List list, Hash[String, untyped] params, Config config) -> bool
+      def self.create(list, params, config)
         names = params["items"].to_s.lines.map(&:strip).reject(&:empty?)
         return false if names.size < 2
 
