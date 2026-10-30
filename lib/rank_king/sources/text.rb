@@ -17,6 +17,9 @@ module RankKing
       #: (csrf: Method) -> _Component
       def self.fields(csrf:) = Views::Sources::TextFields.new
 
+      #: (Roda::RodaRequest r, Config config) -> void
+      def self.routes(r, config) = nil
+
       # Adds the items typed into the new-list form, of which there must
       # be at least two.
       #: (List list, Hash[String, untyped] params, Config config) -> bool

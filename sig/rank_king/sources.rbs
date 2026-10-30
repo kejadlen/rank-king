@@ -49,6 +49,10 @@ module RankKing
       # Sets a new list up from what those fields posted: false, and the
       # list is not made, when they are not enough to go on.
       def create: (List list, Hash[String, untyped] params, Config config) -> bool
+
+      # Mounts the routes the kind's own fields and dialogs post to, ahead
+      # of the app's.
+      def routes: (Roda::RodaRequest r, Config config) -> void
     end
 
     # All a YouTube source reads off the app's config.

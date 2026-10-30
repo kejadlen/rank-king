@@ -28,6 +28,15 @@ module RankKing
       #: (csrf: Method) -> _Component
       def self.fields(csrf:) = Views::Sources::YouTubeFields.new(csrf:)
 
+      # The new-list form's playlist picker, drawn from a pasted cookie. It
+      # is a POST so the cookie stays out of URLs and logs.
+      #: (Roda::RodaRequest r, _InnerTubeConfig config) -> void
+      def self.routes(r, config)
+        r.post PLAYLISTS_PATH.delete_prefix("/") do
+          playlists(r.params["cookie"], config).call
+        end
+      end
+
       # The choice of playlists a pasted cookie opens. Whatever stops it
       # is said in the choice's place.
       #: (untyped text, _InnerTubeConfig config) -> _Component

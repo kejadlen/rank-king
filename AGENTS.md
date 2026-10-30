@@ -130,8 +130,9 @@ rank-king never stores it.
 - A list's source is fixed when it is made. `Sources::KINDS` lists the
   kinds the new-list form offers, and each kind's `title` names it there
   and in settings. Its sync dialog opens from the list's ⋯ menu. Each
-  kind also renders its own fields on the new-list form (`fields`) and
-  sets the new list up from them (`create`).
+  kind also renders its own fields on the new-list form (`fields`),
+  sets the new list up from them (`create`), and mounts any routes those
+  fields post to (`routes`).
 - Every request needs a `Remote-User` header or it gets a 401. That is safe only because a proxy (Tailscale identity) writes the header. `StubLogin` fills it in for `demo.ru` (dev server, Fly apps) and nowhere else: never in `config.ru`, and never in front of real data.
 - Lists are private to their owner (404 for anyone else)
 - Config is a frozen `Data.define` value object

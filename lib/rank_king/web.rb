@@ -37,11 +37,7 @@ module RankKing
         Views::Home.new(lists: lists).call
       end
 
-      # A fragment for the new-list form: the playlists a pasted cookie
-      # opens. It is a POST so the cookie stays out of URLs and logs.
-      r.post "youtube", "playlists" do
-        Sources::YouTube.playlists(r.params["cookie"], config).call
-      end
+      Sources::KINDS.each { |kind| Sources.fetch(kind).routes(r, config) }
 
       r.on "lists" do
         r.is do
